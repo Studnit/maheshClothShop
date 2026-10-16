@@ -4,9 +4,9 @@ spring:
   profiles:
     default: prod
   datasource:
-    url: ${DB_URL:jdbc:postgresql://postgres:HQLibRvEXUoVimENoZnfgsdQFhcMoQtu@postgres.railway.internal:5432/railway}
+    url: ${DB_URL:jdbc:postgresql://postgres:gIuvyUvHKdDTkjVGdVLskJLkoFWdBBtX@hopper.proxy.rlwy.net:25874/railway}
     username: ${DB_USERNAME:postgres}
-    password: ${DB_PASSWORD:HQLibRvEXUoVimENoZnfgsdQFhcMoQtu}
+    password: ${DB_PASSWORD:gIuvyUvHKdDTkjVGdVLskJLkoFWdBBtX}
     hikari:
       maximum-pool-size: ${DB_POOL_SIZE:10}
       minimum-idle: 2
