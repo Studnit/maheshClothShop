@@ -111,6 +111,21 @@
     }, function () { window.prompt('Copy:', text); });
   });
 
+  // ---- back button: shown on every page except the home screens ----
+  (function () {
+    var b = doc.getElementById('backBtn'); if (!b) { return; }
+    var roots = ['/', '/dashboard', '/pos', '/login', '/setup'];
+    var path = location.pathname.replace(/\/+$/, '') || '/';
+    if (roots.indexOf(path) !== -1) { return; }
+    b.classList.remove('d-none');
+    b.addEventListener('click', function () {
+      var sameSite = doc.referrer && doc.referrer.indexOf(location.origin) === 0 && doc.referrer !== location.href;
+      if (sameSite && history.length > 1) { history.back(); return; }
+      var parent = path.replace(/\/[^\/]+$/, '');   // /sales/123 -> /sales
+      location.href = parent || '/dashboard';
+    });
+  })();
+
   // ---- print button: data-print ----
   doc.addEventListener('click', function (e) { if (e.target.closest('[data-print]')) { window.print(); } });
 

@@ -213,7 +213,7 @@ public class SalesService {
         // ---- invoice ----
         Instant now = clock.now();
         SalesInvoice inv = new SalesInvoice();
-        inv.setInvoiceNo(numbering.nextInvoiceNo(clock.toLocalDate(now)));
+        inv.setInvoiceNo(numbering.nextInvoiceNo(clock.toLocal(now)));
         inv.setSaleTime(now);
         inv.setClientRequestId(r.clientRequestId());
         if (customer != null) {

@@ -116,21 +116,36 @@ public class InvoicePdfService {
             band.addCell(right);
             doc.add(band);
 
+            // thin three-colour accent strip under the banner
+            PdfPTable strip = new PdfPTable(new float[]{4f, 3f, 3f});
+            strip.setWidthPercentage(100);
+            for (Color c : new Color[]{new Color(0x7C, 0x3A, 0xED), new Color(0xDB, 0x27, 0x77), new Color(0xF5, 0x9E, 0x0B)}) {
+                PdfPCell sc = new PdfPCell(new Phrase(" ", FontFactory.getFont(FontFactory.HELVETICA, 2)));
+                sc.setBackgroundColor(c);
+                sc.setBorder(Rectangle.NO_BORDER);
+                sc.setFixedHeight(4);
+                strip.addCell(sc);
+            }
+            doc.add(strip);
+
             // ---- billed to / payment status boxes
-            PdfPTable info = new PdfPTable(2);
+            PdfPTable info = new PdfPTable(new float[]{3.4f, 3f, 3.6f});
             info.setWidthPercentage(100);
-            info.setSpacingBefore(10);
+            info.setSpacingBefore(12);
             String cust = latin(inv.getCustomerName() == null || inv.getCustomerName().isBlank() ? "Walk-in customer" : inv.getCustomerName());
             info.addCell(box(label, norm, bold, "BILLED TO", cust,
                     inv.getCustomerPhone() == null ? "" : "Phone: " + inv.getCustomerPhone()));
+            info.addCell(box(label, norm, bold, "INVOICE DETAILS", inv.getInvoiceNo(),
+                    "Date: " + DT.format(clock.toLocal(inv.getSaleTime()))));
             StringBuilder pm = new StringBuilder();
             for (int i = 0; i < pays.size(); i++) {
                 PaymentRow p = pays.get(i);
                 pm.append(i > 0 ? ", " : "").append(latin(p.methodName())).append(" Rs. ").append(IndianFormat.amount(p.amount()));
             }
             boolean due = inv.getBalanceDue().signum() > 0;
-            info.addCell(box(label, norm, bold, "PAYMENT", due ? "BALANCE DUE  Rs. " + IndianFormat.amount(inv.getBalanceDue()) : "PAID IN FULL",
-                    pm.toString()));
+            Font statusFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 10, due ? new Color(0xB4, 0x53, 0x09) : GREEN);
+            info.addCell(box(label, norm, statusFont, "PAYMENT STATUS",
+                    due ? "BALANCE DUE  Rs. " + IndianFormat.amount(inv.getBalanceDue()) : "PAID IN FULL", pm.toString()));
             doc.add(info);
 
             // ---- items
@@ -173,9 +188,7 @@ public class InvoicePdfService {
 
             // ---- totals, right-aligned block with a coloured grand total
             PdfPTable totals = new PdfPTable(new float[]{5f, 3.4f});
-            totals.setWidthPercentage(48);
-            totals.setHorizontalAlignment(Element.ALIGN_RIGHT);
-            totals.setSpacingBefore(10);
+            totals.setWidthPercentage(100);
             total(totals, norm, "Subtotal", inv.getSubtotal(), false);
             BigDecimal allDisc = inv.getLineDiscountTotal().add(inv.getInvoiceDiscount());
             if (allDisc.signum() > 0) {
@@ -203,7 +216,26 @@ public class InvoicePdfService {
             if (due) {
                 total(totals, bold, "Balance due", inv.getBalanceDue(), true);
             }
-            doc.add(totals);
+            PdfPTable foot = new PdfPTable(new float[]{5.2f, 4.8f});
+            foot.setWidthPercentage(100);
+            foot.setSpacingBefore(10);
+            PdfPCell words = new PdfPCell();
+            words.setBorder(Rectangle.NO_BORDER);
+            words.setPaddingRight(14);
+            words.addElement(new Paragraph("AMOUNT IN WORDS", label));
+            words.addElement(new Paragraph(rupeesInWords(inv.getTotal()), norm));
+            if (allDisc.signum() > 0) {
+                Paragraph save = new Paragraph("You saved Rs. " + IndianFormat.amount(allDisc) + " on this bill!",
+                        FontFactory.getFont(FontFactory.HELVETICA_BOLD, 9.5f, GREEN));
+                save.setSpacingBefore(8);
+                words.addElement(save);
+            }
+            foot.addCell(words);
+            PdfPCell tcell = new PdfPCell(totals);
+            tcell.setBorder(Rectangle.NO_BORDER);
+            tcell.setPadding(0);
+            foot.addCell(tcell);
+            doc.add(foot);
 
             PdfPTable thank = new PdfPTable(1);
             thank.setWidthPercentage(100);
@@ -241,17 +273,58 @@ public class InvoicePdfService {
     }
 
     private static PdfPCell box(Font label, Font norm, Font bold, String title, String main, String extra) {
-        PdfPCell c = new PdfPCell();
-        c.setBorderColor(new Color(0xE2, 0xE4, 0xF0));
-        c.setBorderWidth(0.8f);
-        c.setBackgroundColor(LIGHT);
-        c.setPadding(9);
+        PdfPCell c = boxCell();
         c.addElement(new Paragraph(title, label));
         c.addElement(new Paragraph(main, bold));
         if (extra != null && !extra.isBlank()) {
             c.addElement(new Paragraph(extra, norm));
         }
         return c;
+    }
+
+    private static PdfPCell boxCell() {
+        PdfPCell c = new PdfPCell();
+        c.setBorderColor(new Color(0xC7, 0xD2, 0xFE));
+        c.setBorderWidth(0.8f);
+        c.setBackgroundColor(LIGHT);
+        c.setPadding(9);
+        return c;
+    }
+
+    private static final String[] ONES = {"", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten",
+            "Eleven", "Twelve", "Thirteen", "Fourteen", "Fifteen", "Sixteen", "Seventeen", "Eighteen", "Nineteen"};
+    private static final String[] TENS = {"", "", "Twenty", "Thirty", "Forty", "Fifty", "Sixty", "Seventy", "Eighty", "Ninety"};
+
+    /** Indian numbering: Rupees One Lakh Twenty Thousand Five Hundred and Fifty Paise Only. */
+    static String rupeesInWords(BigDecimal amount) {
+        BigDecimal abs = amount.abs().setScale(2, java.math.RoundingMode.HALF_UP);
+        long rupees = abs.longValue();
+        int paise = abs.remainder(BigDecimal.ONE).movePointRight(2).intValue();
+        StringBuilder sb = new StringBuilder("Rupees ").append(rupees == 0 ? "Zero" : words(rupees));
+        if (paise > 0) {
+            sb.append(" and ").append(words(paise)).append(" Paise");
+        }
+        return sb.append(" Only").toString();
+    }
+
+    private static String words(long n) {
+        if (n < 20) {
+            return ONES[(int) n];
+        }
+        if (n < 100) {
+            return TENS[(int) (n / 10)] + (n % 10 == 0 ? "" : " " + ONES[(int) (n % 10)]);
+        }
+        if (n < 1000) {
+            return ONES[(int) (n / 100)] + " Hundred" + (n % 100 == 0 ? "" : " " + words(n % 100));
+        }
+        long[] unit = {10_000_000L, 100_000L, 1000L};
+        String[] name = {"Crore", "Lakh", "Thousand"};
+        for (int i = 0; i < unit.length; i++) {
+            if (n >= unit[i]) {
+                return words(n / unit[i]) + " " + name[i] + (n % unit[i] == 0 ? "" : " " + words(n % unit[i]));
+            }
+        }
+        return "";
     }
 
     /** Helvetica can only draw Latin-1; anything else (e.g. Devanagari) becomes '?'. */

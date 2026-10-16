@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="mr" xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title th:text="${state == 'ok'} ? ${shop.name()} + ' · ' + ${inv.invoiceNo} : ${shop.name()}">Bill</title>
+<link rel="stylesheet" th:href="@{/vendor/bootstrap-icons/bootstrap-icons.min.css}">
+<style>
+  :root { --ink:#0f172a; --muted:#64748b; --line:#e2e8f0; --brand:#4338ca; --brand2:#7c3aed; --ok:#059669; --warn:#d97706; }
+  * { box-sizing: border-box; }
+  body { margin:0; font-family: "Noto Sans Devanagari", Inter, system-ui, -apple-system, "Segoe UI", sans-serif; color:var(--ink);
+         background: linear-gradient(180deg,#e0e7ff 0,#f4f6fb 340px) no-repeat, #f4f6fb; font-size:15px; line-height:1.5; }
+  .wrap { max-width: 720px; margin: 0 auto; padding: 16px; }
+  .hero { background: linear-gradient(135deg,#4338ca,#7c3aed 60%,#db2777); color:#fff; border-radius:20px; padding:22px 22px 18px; box-shadow:0 12px 30px rgba(67,56,202,.35); }
+  .hero .shop { font-size:22px; font-weight:700; letter-spacing:-.01em; }
+  .hero .meta { opacity:.9; font-size:13px; }
+  .hero .row { display:flex; justify-content:space-between; gap:12px; flex-wrap:wrap; margin-top:14px; align-items:flex-end; }
+  .hero .no { font-size:13px; opacity:.85; } .hero .no b { display:block; font-size:17px; opacity:1; }
+  .badge { display:inline-block; padding:3px 12px; border-radius:999px; font-weight:700; font-size:12.5px; background:#d1fae5; color:#065f46; }
+  .badge.due { background:#fef3c7; color:#92400e; }
+  .card { background:#fff; border-radius:18px; box-shadow:0 1px 2px rgba(15,23,42,.06),0 8px 24px rgba(15,23,42,.07); margin-top:14px; overflow:hidden; }
+  .card h2 { margin:0; padding:12px 18px; font-size:12px; letter-spacing:.08em; text-transform:uppercase; color:#3730a3; background:linear-gradient(90deg,#eef2ff,transparent); }
+  .item { display:grid; grid-template-columns: 1fr auto; gap:2px 12px; padding:12px 18px; border-top:1px solid var(--line); }
+  .item .n { font-weight:600; } .item .s { color:var(--muted); font-size:13px; } .item .a { font-weight:700; text-align:right; font-variant-numeric:tabular-nums; }
+  .item .q { color:var(--muted); font-size:13px; text-align:right; }
+  .tot { display:flex; justify-content:space-between; padding:7px 18px; font-variant-numeric:tabular-nums; }
+  .tot.grand { background:linear-gradient(90deg,#059669,#10b981); color:#fff; font-size:19px; font-weight:700; padding:13px 18px; margin-top:6px; }
+  .actions { display:grid; gap:10px; margin-top:16px; }
+  .btn { display:flex; align-items:center; justify-content:center; gap:8px; padding:14px 18px; border-radius:14px; font-weight:700; font-size:16px; text-decoration:none; }
+  .btn.primary { background:linear-gradient(135deg,#4338ca,#7c3aed); color:#fff; box-shadow:0 8px 20px rgba(67,56,202,.35); }
+  .btn.ghost { background:#fff; color:#4338ca; border:2px solid #c7d2fe; }
+  .note { text-align:center; color:var(--muted); font-size:13px; margin:14px 4px 0; }
+  .thanks { text-align:center; margin:22px 0 8px; font-weight:700; color:#4338ca; }
+  .state { text-align:center; padding:40px 20px; } .state i { font-size:54px; color:var(--warn); }
+  .pay { padding:6px 18px 12px; color:var(--muted); font-size:13.5px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <!-- not found / expired -->
+  <div th:if="${state != 'ok'}" class="card state">
+    <i class="bi bi-clock-history"></i>
+    <h1 style="font-size:20px" th:text="${state == 'expired'} ? 'This bill link has expired / हा बिल लिंक संपला आहे' : 'Bill not found / बिल सापडले नाही'">Expired</h1>
+    <p style="color:#64748b">Please contact the shop for a new copy.<br>कृपया नवीन प्रतीसाठी दुकानाशी संपर्क साधा.</p>
+    <p th:if="${!#strings.isEmpty(shop.phone())}" style="font-weight:700" th:text="'📞 ' + ${shop.phone()}">phone</p>
+  </div>
+
+  <th:block th:if="${state == 'ok'}">
+    <div class="hero">
+      <div class="shop" th:text="${shop.name()}">Shop</div>
+      <div class="meta" th:if="${!#strings.isEmpty(shop.addressLine())}" th:text="${shop.addressLine()}">address</div>
+      <div class="meta" th:if="${!#strings.isEmpty(shop.phone())}" th:text="'📞 ' + ${shop.phone()}">phone</div>
+      <div class="meta" th:if="${shop.taxEnabled() and !#strings.isEmpty(shop.gstin())}" th:text="'GSTIN: ' + ${shop.gstin()}">gstin</div>
+      <div class="row">
+        <div class="no">Bill / बिल क्र.<b th:text="${inv.invoiceNo}">MCS-20261016-134512</b>
+          <span th:text="${@fmt.dateTime(inv.saleTime)}">date</span></div>
+        <span class="badge" th:classappend="${inv.balanceDue.signum() > 0} ? 'due'"
+              th:text="${inv.balanceDue.signum() > 0} ? 'DUE ₹' + ${@fmt.amount(inv.balanceDue)} : 'PAID / भरले'">PAID</span>
+      </div>
+    </div>
+
+    <div class="actions">
+      <a class="btn primary" th:href="@{/i/{t}/pdf(t=${token})}"><i class="bi bi-download"></i> Download PDF / पीडीएफ डाउनलोड करा</a>
+      <a class="btn ghost" th:href="@{/i/{t}/pdf(t=${token},view=true)}" target="_blank" rel="noopener"><i class="bi bi-file-earmark-pdf"></i> View PDF / पीडीएफ पहा</a>
+    </div>
+
+    <div class="card">
+      <h2>Items / वस्तू</h2>
+      <div class="item" th:each="l : ${lines}">
+        <div class="n" th:text="${l.productName()}">Shirt</div>
+        <div class="a" th:text="'₹' + ${@fmt.amount(l.lineTotal())}">₹0</div>
+        <div class="s" th:text="${@fmt.variant(l.colourName(), l.sizeName())}">Red / M</div>
+        <div class="q" th:text="${l.quantity()} + ' × ₹' + ${@fmt.amount(l.unitPrice())}">1 × ₹0</div>
+      </div>
+    </div>
+
+    <div class="card" style="padding-bottom:0">
+      <h2>Summary / एकूण</h2>
+      <div class="tot"><span>Subtotal / उपमूल्य</span><span th:text="'₹' + ${@fmt.amount(inv.subtotal)}">0</span></div>
+      <div class="tot" th:if="${inv.lineDiscountTotal.add(inv.invoiceDiscount).signum() > 0}"><span>Discount / सवलत</span><span th:text="'− ₹' + ${@fmt.amount(inv.lineDiscountTotal.add(inv.invoiceDiscount))}">0</span></div>
+      <div class="tot" th:if="${inv.taxTotal.signum() > 0}"><span>GST</span><span th:text="'₹' + ${@fmt.amount(inv.taxTotal)}">0</span></div>
+      <div class="tot" th:if="${inv.roundOff.signum() != 0}"><span>Round off</span><span th:text="'₹' + ${@fmt.amount(inv.roundOff)}">0</span></div>
+      <div class="tot grand"><span>Total / एकूण रक्कम</span><span th:text="'₹' + ${@fmt.amount(inv.total)}">₹0</span></div>
+      <div class="pay"><span th:each="p, st : ${payments}" th:text="(${st.index} > 0 ? ' · ' : '') + ${p.methodName()} + ' ₹' + ${@fmt.amount(p.amount)}">Cash</span></div>
+    </div>
+
+    <p class="note" th:if="${validUntil != null}">
+      This link works until <b th:text="${@fmt.date(validUntil)}">date</b> · हा लिंक <b th:text="${@fmt.date(validUntil)}">date</b> पर्यंत चालू राहील.
+    </p>
+    <div class="thanks">🙏 धन्यवाद! पुन्हा भेट द्या · Thank you, visit again!</div>
+    <p class="note" th:if="${!#strings.isEmpty(shop.footer())}" th:text="${shop.footer()}">footer</p>
+  </th:block>
+</div>
+</body>
+</html>

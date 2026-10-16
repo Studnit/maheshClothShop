@@ -5,6 +5,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 /**
  * Gap-free, race-free document numbers. The upsert takes a row lock that is held until the surrounding
@@ -28,7 +29,7 @@ public class NumberingService {
     }
 
     /** Sales invoice number using the owner's configured format. */
-    public String nextInvoiceNo(LocalDate date) {
+    public String nextInvoiceNo(LocalDateTime date) {
         String pattern = settings.get("invoice.format", "{PREFIX}/{FYS}/{SEQ}");
         String period = DocumentNumberFormatter.periodKey(pattern, date);
         long n = next("INVOICE", period);

@@ -46,8 +46,20 @@
 
       <div class="col-lg-4">
         <div class="card mb-3"><div class="card-header" th:text="#{products.image}">Photo</div><div class="card-body">
-          <input class="form-control" type="file" name="image" accept="image/png,image/jpeg,image/webp">
-          <div class="form-text" th:text="#{products.image.help}">PNG, JPG or WebP up to 2 MB.</div>
+          <div id="imgPicker" th:data-t-camera-error="#{products.image.camera.error}" th:data-t-ready="#{products.image.ready}">
+            <input type="file" name="image" id="imgReal" class="d-none" accept="image/png,image/jpeg,image/webp">
+            <input type="file" id="imgGallery" class="d-none" accept="image/*">
+            <input type="file" id="imgCameraFallback" class="d-none" accept="image/*" capture="environment">
+            <div class="img-preview" id="imgPreview"><i class="bi bi-image"></i></div>
+            <video id="imgVideo" class="img-video d-none" autoplay playsinline muted></video>
+            <div class="d-grid gap-2 mt-2">
+              <button type="button" class="btn btn-outline-primary" id="imgChoose"><i class="bi bi-folder2-open me-1"></i><span th:text="#{products.image.choose}">Choose from gallery / files</span></button>
+              <button type="button" class="btn btn-outline-success" id="imgCamera"><i class="bi bi-camera me-1"></i><span th:text="#{products.image.camera}">Take a photo</span></button>
+              <button type="button" class="btn btn-success d-none" id="imgSnap"><i class="bi bi-record-circle me-1"></i><span th:text="#{products.image.capture}">Capture</span></button>
+              <button type="button" class="btn btn-link btn-sm text-danger d-none" id="imgCancel" th:text="#{common.cancel}">Cancel</button>
+            </div>
+            <div class="form-text" id="imgInfo" th:text="#{products.image.help}">JPG or PNG, up to 2 MB.</div>
+          </div>
         </div></div>
         <div class="card mb-3"><div class="card-body">
           <div class="form-check form-switch"><input class="form-check-input" type="checkbox" th:field="*{active}" id="active"><label class="form-check-label" for="active" th:text="#{status.active}">Active</label></div>
@@ -60,5 +72,6 @@
     </div>
   </form>
 </th:block>
+<th:block layout:fragment="scripts"><script th:src="@{/js/product-image.js}"></script></th:block>
 </body>
 </html>

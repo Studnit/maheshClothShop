@@ -88,6 +88,7 @@
     </header>
 
     <main class="content">
+      <button type="button" id="backBtn" class="back-btn d-none"><i class="bi bi-arrow-left"></i> <span th:text="#{common.back}">Back</span></button>
       <div class="alert alert-success alert-dismissible fade show" role="alert" th:if="${success != null}">
         <i class="bi bi-check-circle me-1"></i><span th:text="${success}"></span><button type="button" class="btn-close" data-bs-dismiss="alert" th:aria-label="#{common.close}"></button>
       </div>

@@ -45,6 +45,15 @@ class FormattingAndNumberingTest {
     }
 
     @Test
+    void dateTimeInvoiceNumber() {
+        java.time.LocalDateTime t = java.time.LocalDateTime.of(2026, 10, 16, 13, 45, 12);
+        String f = "{PREFIX}-{YYYYMMDD}-{HHMMSS}";
+        assertEquals("MCS-20261016-134512", DocumentNumberFormatter.format(f, "MCS", t, 1, 5));
+        assertEquals("MCS-20261016-134512-2", DocumentNumberFormatter.format(f, "MCS", t, 2, 5));
+        assertEquals("20261016134512", DocumentNumberFormatter.periodKey(f, t));
+    }
+
+    @Test
     void defaultInvoiceNumberFitsTheGstLimit() {
         String no = DocumentNumberFormatter.format("{PREFIX}/{FYS}/{SEQ}", "INV", LocalDate.of(2026, 10, 15), 1, 5);
         assertEquals("INV/2627/00001", no);

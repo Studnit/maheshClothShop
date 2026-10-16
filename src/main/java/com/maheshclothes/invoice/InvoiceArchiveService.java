@@ -49,7 +49,7 @@ public class InvoiceArchiveService {
         byte[] bytes = pdf.render(invoiceId);
         UUID fileId = files.save("Invoice-" + invoiceNo.replace('/', '-') + ".pdf", "application/pdf", bytes);
         String token = newToken();
-        int days = settings.integer("whatsapp.link_validity_days", 90);
+        int days = settings.integer("whatsapp.link_validity_days", 180);
         Instant expires = days > 0 ? Instant.now().plus(days, ChronoUnit.DAYS) : null;
         String sha = sha256(bytes);
         jdbc.update("insert into invoice_documents (invoice_id, file_id, language, sha256, share_token, token_expires_at, created_by) "
@@ -65,6 +65,24 @@ public class InvoiceArchiveService {
                 (rs, n) -> new Archived(rs.getObject(1, UUID.class), rs.getObject(2, UUID.class),
                         rs.getObject(3, UUID.class), rs.getString(4), rs.getString(5), rs.getString(6)), invoiceId)
                 .stream().findFirst();
+    }
+
+    /** What a public link points to; {@code expired} links are still recognised so the page can say so. */
+    public record Shared(UUID invoiceId, UUID fileId, Instant expiresAt, boolean expired) {
+    }
+
+    /** Looks a link up without counting a download (used to show the public bill page). */
+    public Optional<Shared> peek(String token) {
+        if (token == null || token.length() < 20 || token.length() > 64) {
+            return Optional.empty();
+        }
+        return jdbc.query("select invoice_id, file_id, token_expires_at from invoice_documents where share_token = ?",
+                (rs, n) -> {
+                    java.sql.Timestamp t = rs.getTimestamp(3);
+                    Instant exp = t == null ? null : t.toInstant();
+                    return new Shared(rs.getObject(1, UUID.class), rs.getObject(2, UUID.class), exp,
+                            exp != null && exp.isBefore(Instant.now()));
+                }, token).stream().findFirst();
     }
 
     /** Resolves a customer download link; empty when unknown or expired. Counts the download. */
