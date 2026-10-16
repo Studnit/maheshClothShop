@@ -2,11 +2,11 @@ spring:
   application:
     name: mahesh-clothes-shop
   profiles:
-    default: dev
+    default: prod
   datasource:
-    url: ${DB_URL:jdbc:postgresql://postgres.railway.internal:5432/railway}
+    url: ${DB_URL:jdbc:postgresql://postgres.railway.internal:5432/railway} #jdbc:postgresql://postgres:gIuvyUvHKdDTkjVGdVLskJLkoFWdBBtX@postgres.railway.internal:5432/railway}
     username: ${DB_USERNAME:postgres}
-    password: ${DB_PASSWORD:gIuvyUvHKdDTkjVGdVLskJLkoFWdBBtX}
+    password: ${DB_PASSWORD:gIuvyUvHKdDTkjVGdVLskJLkoFWdBBtX}  #postgres.railway.internal
     hikari:
       maximum-pool-size: ${DB_POOL_SIZE:10}
       minimum-idle: 2
@@ -62,10 +62,6 @@ server:
         http-only: true
         same-site: lax
         secure: ${COOKIE_SECURE:false}
-    encoding:
-      charset: UTF-8
-      enabled: true
-      force: true
   error:
     include-message: never
     include-stacktrace: never
@@ -86,21 +82,21 @@ management:
 
 springdoc:
   api-docs:
-    enabled: SWAGGER_ENABLED
+    enabled: ${SWAGGER_ENABLED:true}
   swagger-ui:
-    enabled: SWAGGER_ENABLED
+    enabled: ${SWAGGER_ENABLED:true}
     path: /swagger-ui.html
 
 app:
-  timezone: APP_TIMEZONE
+  timezone: ${APP_TIMEZONE:Asia/Kolkata}
   # If set, the first-run /setup page requires this token. Strongly recommended in production.
-  setup-token: APP_SETUP_TOKEN
+  setup-token: ${APP_SETUP_TOKEN:}
   # Secrets come ONLY from the environment, never from the database or the Settings screen.
   whatsapp:
-    access-token: WHATSAPP_ACCESS_TOKEN
-    app-secret: WHATSAPP_APP_SECRET
-    verify-token: WHATSAPP_VERIFY_TOKEN
-    api-version: WHATSAPP_API_VERSION
+    access-token: ${WHATSAPP_ACCESS_TOKEN:}
+    app-secret: ${WHATSAPP_APP_SECRET:}
+    verify-token: ${WHATSAPP_VERIFY_TOKEN:}
+    api-version: ${WHATSAPP_API_VERSION:v23.0}
 
 logging:
   level:
