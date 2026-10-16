@@ -62,6 +62,10 @@ server:
         http-only: true
         same-site: lax
         secure: ${COOKIE_SECURE:false}
+    encoding:
+      charset: UTF-8
+      enabled: true
+      force: true
   error:
     include-message: never
     include-stacktrace: never
@@ -82,21 +86,21 @@ management:
 
 springdoc:
   api-docs:
-    enabled: ${SWAGGER_ENABLED:true}
+    enabled: SWAGGER_ENABLED
   swagger-ui:
-    enabled: ${SWAGGER_ENABLED:true}
+    enabled: SWAGGER_ENABLED
     path: /swagger-ui.html
 
 app:
-  timezone: ${APP_TIMEZONE:Asia/Kolkata}
+  timezone: APP_TIMEZONE
   # If set, the first-run /setup page requires this token. Strongly recommended in production.
-  setup-token: ${APP_SETUP_TOKEN:}
+  setup-token: APP_SETUP_TOKEN
   # Secrets come ONLY from the environment, never from the database or the Settings screen.
   whatsapp:
-    access-token: ${WHATSAPP_ACCESS_TOKEN:}
-    app-secret: ${WHATSAPP_APP_SECRET:}
-    verify-token: ${WHATSAPP_VERIFY_TOKEN:}
-    api-version: ${WHATSAPP_API_VERSION:v23.0}
+    access-token: WHATSAPP_ACCESS_TOKEN
+    app-secret: WHATSAPP_APP_SECRET
+    verify-token: WHATSAPP_VERIFY_TOKEN
+    api-version: WHATSAPP_API_VERSION
 
 logging:
   level:
