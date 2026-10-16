@@ -2,9 +2,9 @@ spring:
   application:
     name: mahesh-clothes-shop
   profiles:
-    default: prod
+    default: dev
   datasource:
-    url: ${DB_URL:jdbc:postgresql://postgres.railway.internal:5432/railway} #jdbc:postgresql://postgres:gIuvyUvHKdDTkjVGdVLskJLkoFWdBBtX@postgres.railway.internal:5432/railway}
+    url: ${DB_URL:jdbc:postgresql://postgres.railway.internal:5432/railway}
     username: ${DB_USERNAME:postgres}
     password: ${DB_PASSWORD:gIuvyUvHKdDTkjVGdVLskJLkoFWdBBtX}
     hikari:

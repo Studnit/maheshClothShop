@@ -29,13 +29,18 @@ required by Meta, not by this app:
    * Name: `invoice_thank_you` (or change the name in Settings)
    * Category: **Utility**
    * Header: **Document**
-   * Body, English (language `en`):
-     `Hello {{1}}, thank you for shopping at {{2}}! Your bill {{3}} for {{4}} is attached. We hope to see you again soon.`
-   * Body, Marathi (add a second language `mr`):
-     `नमस्कार {{1}}, {{2}} मध्ये खरेदी केल्याबद्दल धन्यवाद! तुमचे {{3}} क्रमांकाचे {{4}} चे बिल सोबत जोडले आहे. पुन्हा लवकर भेटू या.`
-   * Sample values for approval: `Ramesh`, `Mahesh Clothes Shop`, `INV/2025-26/00012`, `Rs. 1,250.00`.
-   Approval usually takes minutes to a day. The app fills {{1}} customer name (or "Customer"), {{2}} shop name,
-   {{3}} bill number and {{4}} total as "Rs. amount".
+   * Language: **Marathi (`mr`)**
+   * Body (no variables - paste exactly):
+     ```
+     🙏 महेश क्लॉथ शॉपमध्ये आपले हार्दिक स्वागत! 🙏
+     आमच्या महेश क्लॉथ शॉपला भेट दिल्याबद्दल आपले मनःपूर्वक आभार! ❤️
+     आपला विश्वास आणि प्रेम हेच आमच्यासाठी सर्वात मोठे बक्षीस आहे. 😊
+     आपली सेवा करण्याची संधी दिल्याबद्दल धन्यवाद! पुन्हा एकदा नक्की भेट द्या. 🛍️
+     महेश क्लॉथ शॉप
+     ✨ आपला विश्वास, आमची गुणवत्ता! ✨
+     ```
+   Approval usually takes minutes to a day. The app sends this template with the bill PDF as the document header.
+   The same text is used for the "Send on WhatsApp" link fallback (plus a download link).
 3. **A permanent access token** (System User token with `whatsapp_business_messaging` and `whatsapp_business_management`).
 4. **Customer consent.** The cashier ticks "Customer agrees to receive this bill on WhatsApp" on the billing screen;
    nothing is sent without it. Do not message people who did not agree - it can get the number blocked.

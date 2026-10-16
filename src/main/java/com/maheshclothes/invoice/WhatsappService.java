@@ -259,8 +259,7 @@ public class WhatsappService {
     }
 
     private String language() {
-        String l = settings.defaultLanguage();
-        return "mr".equalsIgnoreCase(l) || "both".equalsIgnoreCase(l) ? "mr" : "en";
+        return "mr"; // the shop thank-you text is Marathi
     }
 
     /** The thank-you text: used for the wa.me link, and as the human-readable record of what the customer got. */
@@ -326,7 +325,6 @@ public class WhatsappService {
 
     private String sendTemplate(String to, String lang, String mediaId, String fileName, Inv inv) {
         String code = settings.get("mr".equals(lang) ? "whatsapp.template_lang_mr" : "whatsapp.template_lang_en", lang);
-        String customer = inv.customerName() == null || inv.customerName().isBlank() ? "Customer" : inv.customerName();
         Map<String, Object> payload = Map.of(
                 "messaging_product", "whatsapp",
                 "to", to,
@@ -336,10 +334,8 @@ public class WhatsappService {
                         "language", Map.of("code", code),
                         "components", List.of(
                                 Map.of("type", "header", "parameters", List.of(Map.of("type", "document",
-                                        "document", Map.of("id", mediaId, "filename", fileName)))),
-                                Map.of("type", "body", "parameters", List.of(
-                                        text(customer), text(inv.shop()), text(inv.invoiceNo()),
-                                        text("Rs. " + IndianFormat.amount(inv.total())))))));
+                                        "document", Map.of("id", mediaId, "filename", fileName)))))));
+        // the approved template body is the fixed thank-you text, so there are no body parameters
         JsonNode r = http.post().uri(graph("/messages"))
                 .header(HttpHeaders.AUTHORIZATION, "Bearer " + props.whatsapp().accessToken())
                 .contentType(MediaType.APPLICATION_JSON).body(payload).retrieve().body(JsonNode.class);
