@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout}">
+<head><title th:text="#{nav.returns}">Returns</title></head>
+<body>
+<th:block layout:fragment="content">
+  <div class="page-head"><div><h1 th:text="#{nav.returns}">Returns</h1></div>
+    <a class="btn btn-primary" th:href="@{/returns/new}"><i class="bi bi-arrow-return-left me-1"></i><span th:text="#{return.new}">New return</span></a></div>
+  <div class="card"><div class="card-body border-bottom"><form class="filters" method="get" th:action="@{/returns}">
+    <div><label class="form-label" th:text="#{filter.from}">From</label><input type="date" class="form-control" name="from" th:value="${from}"></div>
+    <div><label class="form-label" th:text="#{filter.to}">To</label><input type="date" class="form-control" name="to" th:value="${to}"></div>
+    <div><label class="form-label" th:text="#{filter.search}">Search</label><input class="form-control" name="q" th:value="${q}" th:placeholder="#{return.search.ph}"></div>
+    <div><button class="btn btn-primary" type="submit"><i class="bi bi-search"></i></button></div></form></div>
+  <div class="table-responsive"><table class="table table-hover mb-0">
+    <thead><tr><th th:text="#{return.no}">Return</th><th th:text="#{col.date}">Date</th><th th:text="#{sale.invoice}">Invoice</th><th th:text="#{col.customer}">Customer</th><th th:text="#{col.type}">Type</th><th class="text-end" th:text="#{col.total}">Total</th><th class="text-end" th:text="#{return.refunded}">Refunded</th></tr></thead>
+    <tbody>
+      <tr th:each="r : ${page.items()}"><td><a class="fw-semibold" th:href="@{/returns/{id}(id=${r.id()})}" th:text="${r.returnNo()}">R</a></td>
+        <td th:text="${@fmt.dateTime(r.time())}">d</td>
+        <td><a th:href="@{/sales/{id}(id=${r.invoiceId()})}" th:text="${r.invoiceNo()}">I</a></td>
+        <td th:text="${r.customer() != null ? r.customer() : #messages.msg('customer.walkin')}">c</td>
+        <td><span class="status-pill" th:classappend="${r.type() == 'EXCHANGE'} ? 'pill-info' : 'pill-warn'" th:text="#{'return.type.' + ${r.type()}}">t</span></td>
+        <td class="text-end money" th:text="${@fmt.money(r.total())}">0</td>
+        <td class="text-end money" th:text="${r.refunded().signum() > 0} ? ${@fmt.money(r.refunded())} : '–'">–</td></tr>
+      <tr th:if="${#lists.isEmpty(page.items())}"><td colspan="7"><div th:replace="~{fragments/ui :: empty('arrow-return-left', 'return.empty')}"></div></td></tr>
+    </tbody></table></div>
+    <div th:replace="~{fragments/ui :: pager(${page})}"></div></div>
+</th:block>
+</body>
+</html>

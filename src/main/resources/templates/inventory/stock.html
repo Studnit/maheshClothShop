@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout}">
+<head><title th:text="#{nav.stock}">Stock</title></head>
+<body>
+<th:block layout:fragment="content">
+  <div class="page-head">
+    <div><h1 th:text="#{nav.stock}">Stock</h1><div class="sub" th:text="#{stock.sub}">What you have on the shelf right now</div></div>
+    <div class="d-flex gap-2 flex-wrap">
+      <a class="btn btn-primary" th:href="@{/inventory/adjust}" sec:authorize="hasAuthority('STOCK_ADJUST')"><i class="bi bi-sliders me-1"></i><span th:text="#{dash.adjust.stock}">Adjust stock</span></a>
+      <a class="btn btn-outline-secondary" th:href="@{/inventory/count}" sec:authorize="hasAuthority('STOCK_APPROVE')"><i class="bi bi-clipboard-check me-1"></i><span th:text="#{stock.count}">Physical count</span></a>
+      <a class="btn btn-outline-secondary" th:href="@{/inventory/movements}"><i class="bi bi-clock-history me-1"></i><span th:text="#{stock.movements}">History</span></a>
+      <a class="btn btn-outline-secondary" th:href="@{/inventory/insights}"><i class="bi bi-graph-up-arrow me-1"></i><span th:text="#{nav.insights}">Insights</span></a>
+    </div>
+  </div>
+  <div class="row g-3 mb-3">
+    <div class="col-6 col-lg-3"><div class="card kpi"><span class="ico ico-sky"><i class="bi bi-boxes"></i></span><div class="label" th:text="#{stock.kpi.units}">Items in stock</div><div class="value" th:text="${@fmt.number(summary.units())}">0</div></div></div>
+    <div class="col-6 col-lg-3" sec:authorize="hasAuthority('COST_VIEW')"><div class="card kpi"><span class="ico ico-indigo"><i class="bi bi-currency-rupee"></i></span><div class="label" th:text="#{dash.stock.value}">Stock value</div><div class="value money" th:text="${@fmt.money(summary.value())}">0</div></div></div>
+    <div class="col-6 col-lg-3"><a class="card kpi d-block text-reset" th:href="@{/inventory(status='low')}"><span class="ico ico-amber"><i class="bi bi-exclamation-triangle"></i></span><div class="label" th:text="#{stock.status.low}">Low</div><div class="value" th:text="${summary.low()}">0</div></a></div>
+    <div class="col-6 col-lg-3"><a class="card kpi d-block text-reset" th:href="@{/inventory(status='out')}"><span class="ico ico-rose"><i class="bi bi-x-octagon"></i></span><div class="label" th:text="#{stock.status.out}">Out</div><div class="value" th:text="${summary.out()}">0</div></a></div>
+  </div>
+  <div class="card">
+    <div class="card-body border-bottom">
+      <form class="filters" method="get" th:action="@{/inventory}">
+        <div><label class="form-label" th:text="#{filter.search}">Search</label><input class="form-control" name="q" th:value="${q}" th:placeholder="#{products.search.ph}"></div>
+        <div><label class="form-label" th:text="#{col.category}">Category</label>
+          <select class="form-select" name="category" data-autosubmit><option value="" th:text="#{filter.all}">All</option><option th:each="c : ${categories}" th:value="${c.id}" th:selected="${c.id == category}" th:text="${c.name}">c</option></select></div>
+        <div><label class="form-label" th:text="#{col.status}">Status</label>
+          <select class="form-select" name="status" data-autosubmit>
+            <option value="" th:text="#{filter.all}">All</option>
+            <option value="low" th:selected="${status == 'low'}" th:text="#{stock.status.low}">Low</option>
+            <option value="out" th:selected="${status == 'out'}" th:text="#{stock.status.out}">Out</option>
+            <option value="lowout" th:selected="${status == 'lowout'}" th:text="#{stock.filter.lowout}">Low or out</option>
+            <option value="damaged" th:selected="${status == 'damaged'}" th:text="#{col.damaged}">Damaged</option></select></div>
+        <div><button class="btn btn-primary" type="submit"><i class="bi bi-search"></i></button></div>
+      </form>
+    </div>
+    <div class="table-responsive"><table class="table table-hover mb-0">
+      <thead><tr><th th:text="#{col.product}">Product</th><th th:text="#{col.colour}">Colour</th><th th:text="#{col.size}">Size</th><th>SKU</th><th th:text="#{col.category}">Category</th>
+        <th class="text-end" th:text="#{col.available}">Stock</th><th class="text-end" th:text="#{col.damaged}">Damaged</th>
+        <th class="text-end" sec:authorize="hasAuthority('COST_VIEW')" th:text="#{col.value}">Value</th><th th:text="#{col.status}">Status</th><th></th></tr></thead>
+      <tbody>
+        <tr th:each="r : ${page.items()}">
+          <td><a th:href="@{/products/{id}(id=${r.productId()})}" th:text="${r.productName()}">p</a></td>
+          <td th:text="${r.colourName()}">c</td><td th:text="${r.sizeName()}">s</td><td class="small text-muted" th:text="${r.sku()}">sku</td><td th:text="${r.categoryName()}">cat</td>
+          <td class="text-end num fw-semibold" th:text="${r.available()}">0</td><td class="text-end num" th:text="${r.damaged()}">0</td>
+          <td class="text-end money" sec:authorize="hasAuthority('COST_VIEW')" th:text="${@fmt.money(r.value())}">0</td>
+          <td><span class="status-pill" th:classappend="${r.status() == 'OUT'} ? 'pill-bad' : (${r.status() == 'LOW'} ? 'pill-warn' : 'pill-ok')" th:text="#{'stock.status.' + ${r.status().toLowerCase()}}">OK</span></td>
+          <td class="text-end"><a class="btn btn-sm btn-outline-secondary" th:href="@{/inventory/adjust(variant=${r.variantId()})}" sec:authorize="hasAuthority('STOCK_ADJUST')"><i class="bi bi-sliders"></i></a>
+            <a class="btn btn-sm btn-outline-secondary" th:href="@{/inventory/movements(variant=${r.variantId()})}"><i class="bi bi-clock-history"></i></a></td>
+        </tr>
+        <tr th:if="${#lists.isEmpty(page.items())}"><td colspan="10"><div th:replace="~{fragments/ui :: empty('boxes', 'stock.empty')}"></div></td></tr>
+      </tbody>
+    </table></div>
+    <div th:replace="~{fragments/ui :: pager(${page})}"></div>
+  </div>
+</th:block>
+</body>
+</html>

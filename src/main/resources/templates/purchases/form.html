@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout}">
+<head><title th:text="#{dash.new.purchase}">New purchase</title></head>
+<body>
+<th:block layout:fragment="content">
+  <div id="pf" th:data-id="${purchaseId}" th:data-lines="${linesJson}" th:data-tax="${taxOn}"
+       th:data-t-added="#{purchase.line.exists}" th:data-t-saved="#{purchase.draft.saved}">
+  <div class="page-head"><div><h1 th:text="${purchaseId != null} ? #{purchase.edit.draft} : #{dash.new.purchase}">New purchase</h1><div class="sub" th:text="#{purchase.form.sub}">Enter what the supplier's bill says. Stock increases only when you confirm receipt.</div></div></div>
+  <div class="row g-3">
+    <div class="col-lg-8">
+      <div class="card mb-3"><div class="card-body row g-3">
+        <div class="col-md-5"><label class="form-label" th:text="#{nav.suppliers}">Supplier</label>
+          <select class="form-select" id="supplier"><option value="" th:text="#{common.choose}">Choose</option><option th:each="s : ${suppliers}" th:value="${s.id()}" th:selected="${s.id() == supplierId}" th:text="${s.name()}">s</option></select></div>
+        <div class="col-md-4"><label class="form-label" th:text="#{purchase.supplier.invoice}">Supplier bill no.</label><input class="form-control" id="invNo" th:value="${invNo}" maxlength="60"></div>
+        <div class="col-md-3"><label class="form-label" th:text="#{col.date}">Date</label><input class="form-control" type="date" id="pdate" th:value="${date}" th:max="${date}"></div>
+      </div></div>
+      <div class="card mb-3">
+        <div class="card-header"><div class="position-relative"><input class="form-control" id="itemQ" autocomplete="off" th:placeholder="#{pos.search.placeholder}"><div id="itemList" class="list-group position-absolute w-100 shadow d-none" style="z-index:20;max-height:320px;overflow:auto"></div></div></div>
+        <div class="table-responsive"><table class="table mb-0"><thead><tr><th th:text="#{col.product}">Item</th><th style="width:90px" class="text-end" th:text="#{col.qty}">Qty</th><th style="width:120px" class="text-end" th:text="#{purchase.unit.price}">Price</th><th style="width:100px" class="text-end" th:text="#{col.discount}">Disc.</th><th style="width:80px" class="text-end" th:if="${taxOn}">GST%</th><th class="text-end" th:text="#{col.total}">Total</th><th class="text-end" th:text="#{purchase.landed}">Cost/item</th><th></th></tr></thead>
+          <tbody id="pLines"></tbody></table></div>
+      </div>
+    </div>
+    <div class="col-lg-4"><div class="card position-sticky" style="top:76px"><div class="card-body">
+      <dl class="row mb-2">
+        <dt class="col-6 fw-normal text-muted" th:text="#{pos.subtotal}">Subtotal</dt><dd class="col-6 text-end money" id="qSub">₹0.00</dd>
+        <dt class="col-6 fw-normal text-muted" th:text="#{pos.discount}">Discount</dt><dd class="col-6 text-end money" id="qDisc">₹0.00</dd>
+        <dt class="col-6 fw-normal text-muted" th:if="${taxOn}">GST</dt><dd class="col-6 text-end money" th:if="${taxOn}" id="qTax">₹0.00</dd>
+        <dt class="col-6 fw-normal text-muted" th:text="#{purchase.extra}">Freight / packing</dt><dd class="col-6"><input class="form-control form-control-sm text-end" id="extra" inputmode="decimal" th:value="${extra}"></dd>
+        <dt class="col-6 fs-5" th:text="#{pos.total}">Total</dt><dd class="col-6 text-end money fw-bold fs-5" id="qTotal">₹0.00</dd>
+      </dl>
+      <textarea class="form-control mb-3" id="pnotes" rows="2" th:placeholder="#{col.notes}" th:text="${notes}"></textarea>
+      <div class="d-grid gap-2">
+        <button class="btn btn-primary" type="button" id="saveReceive"><i class="bi bi-box-arrow-in-down me-1"></i><span th:text="#{purchase.save.receive}">Save &amp; receive stock</span></button>
+        <button class="btn btn-outline-secondary" type="button" id="saveDraft"><span th:text="#{purchase.save.draft}">Save as draft</span></button>
+      </div>
+      <div class="text-danger small mt-2 d-none" id="pErr"></div>
+    </div></div></div>
+  </div>
+  </div>
+</th:block>
+<th:block layout:fragment="scripts"><script th:src="@{/js/purchase-form.js}"></script></th:block>
+</body>
+</html>

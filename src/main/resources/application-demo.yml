@@ -1,0 +1,5 @@
+# Optional: add this profile to load clearly-labelled [DEMO] products, customers and bills.
+#   SPRING_PROFILES_ACTIVE=dev,demo      (use only on a throw-away database)
+spring:
+  flyway:
+    locations: classpath:db/migration,classpath:db/demo

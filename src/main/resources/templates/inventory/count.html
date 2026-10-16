@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout}">
+<head><title th:text="#{stock.count}">Physical count</title></head>
+<body>
+<th:block layout:fragment="content">
+  <div class="page-head"><div><h1 th:text="#{stock.count}">Physical count</h1><div class="sub" th:text="#{stock.count.sub}">Count the shelf, type what you found. Only rows you fill in are changed; differences are recorded as gain/loss.</div></div>
+    <form method="get" th:action="@{/inventory/count}"><select class="form-select" name="category" data-autosubmit><option value="" th:text="#{filter.all}">All</option>
+      <option th:each="c : ${categories}" th:value="${c.id}" th:selected="${c.id == category}" th:text="${c.name}">c</option></select></form></div>
+  <form th:action="@{/inventory/count/apply}" method="post" data-once>
+    <div class="card mb-3"><div class="table-responsive"><table class="table table-hover mb-0">
+      <thead><tr><th th:text="#{col.product}">Product</th><th th:text="#{col.colour}">Colour</th><th th:text="#{col.size}">Size</th><th class="text-end" th:text="#{stock.system.qty}">In system</th><th style="width:140px" th:text="#{stock.counted}">Counted</th></tr></thead>
+      <tbody><tr th:each="r : ${page.items()}"><td th:text="${r.productName()}">p</td><td th:text="${r.colourName()}">c</td><td th:text="${r.sizeName()}">s</td>
+        <td class="text-end num" th:text="${r.available()}">0</td><td><input class="form-control form-control-sm text-end" type="number" min="0" th:name="'c_' + ${r.variantId()}"></td></tr></tbody>
+    </table></div></div>
+    <div class="row g-2"><div class="col-md-8"><input class="form-control" name="note" maxlength="200" th:placeholder="#{stock.count.note}"></div>
+      <div class="col-md-4"><button class="btn btn-primary w-100" type="submit" th:attr="data-confirm=#{stock.count.confirm}"><i class="bi bi-clipboard-check me-1"></i><span th:text="#{stock.count.apply}">Apply counted quantities</span></button></div></div>
+  </form>
+</th:block>
+</body>
+</html>

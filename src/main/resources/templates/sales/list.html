@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout}">
+<head><title th:text="#{nav.sales}">Invoices</title></head>
+<body>
+<th:block layout:fragment="content">
+  <div class="page-head">
+    <div><h1 th:text="#{nav.sales}">Invoices</h1><div class="sub" th:text="${seesAll} ? #{sales.sub.all} : #{sales.sub.own}">All invoices</div></div>
+    <a class="btn btn-primary" th:href="@{/pos}" sec:authorize="hasAuthority('SALE_CREATE')"><i class="bi bi-plus-lg me-1"></i><span th:text="#{nav.pos}">New Bill</span></a>
+  </div>
+  <div class="card mb-3"><div class="card-body">
+    <form class="filters" method="get" th:action="@{/sales}">
+      <div><label class="form-label" th:text="#{filter.search}">Search</label><input class="form-control" name="q" th:value="${q}" th:placeholder="#{sales.search.ph}"></div>
+      <div><label class="form-label" th:text="#{filter.from}">From</label><input class="form-control" type="date" name="from" th:value="${from}"></div>
+      <div><label class="form-label" th:text="#{filter.to}">To</label><input class="form-control" type="date" name="to" th:value="${to}"></div>
+      <div><label class="form-label" th:text="#{col.status}">Status</label>
+        <select class="form-select" name="status">
+          <option value="" th:text="#{filter.all}">All</option>
+          <option value="COMPLETED" th:selected="${status == 'COMPLETED'}" th:text="#{sale.status.completed}">Completed</option>
+          <option value="CANCELLED" th:selected="${status == 'CANCELLED'}" th:text="#{sale.status.cancelled}">Cancelled</option>
+        </select></div>
+      <div class="form-check mb-2"><input class="form-check-input" type="checkbox" name="due" value="true" id="dueOnly" th:checked="${due}"><label class="form-check-label" for="dueOnly" th:text="#{sales.only.due}">Only unpaid</label></div>
+      <div><button class="btn btn-primary" type="submit"><i class="bi bi-funnel me-1"></i><span th:text="#{filter.apply}">Apply</span></button></div>
+    </form>
+  </div></div>
+  <div class="card">
+    <div class="table-responsive">
+      <table class="table table-hover mb-0">
+        <thead><tr><th th:text="#{col.invoice}">Invoice</th><th th:text="#{col.time}">Time</th><th th:text="#{col.customer}">Customer</th>
+          <th class="text-end" th:text="#{col.items}">Items</th><th class="text-end" th:text="#{col.total}">Total</th><th class="text-end" th:text="#{col.due}">Due</th>
+          <th th:text="#{col.status}">Status</th><th>WhatsApp</th><th th:if="${seesAll}" th:text="#{col.cashier}">Cashier</th></tr></thead>
+        <tbody>
+          <tr th:each="r : ${page.items()}">
+            <td><a class="fw-semibold" th:href="@{/sales/{id}(id=${r.id()})}" th:text="${r.invoiceNo()}">INV</a></td>
+            <td th:text="${@fmt.dateTime(r.saleTime())}">time</td>
+            <td><div th:text="${r.customerName() != null ? r.customerName() : #messages.msg('customer.walkin')}">name</div><small class="text-muted" th:text="${r.customerPhone()}"></small></td>
+            <td class="text-end num" th:text="${r.lines()}">1</td>
+            <td class="text-end money" th:text="${@fmt.money(r.total())}">0</td>
+            <td class="text-end money" th:text="${r.balance().signum() > 0} ? ${@fmt.money(r.balance())} : '–'">–</td>
+            <td><span th:replace="~{fragments/ui :: salePill(${r.status()}, ${r.balance()})}"></span></td>
+            <td><th:block th:if="${r.waStatus() != null}"><span th:replace="~{fragments/ui :: waPill(${r.waStatus()})}"></span></th:block></td>
+            <td th:if="${seesAll}" th:text="${r.cashier()}">cashier</td>
+          </tr>
+          <tr th:if="${#lists.isEmpty(page.items())}"><td colspan="9"><div th:replace="~{fragments/ui :: empty('receipt', 'sales.empty')}"></div></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div th:replace="~{fragments/ui :: pager(${page})}"></div>
+  </div>
+</th:block>
+</body>
+</html>

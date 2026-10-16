@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout}">
+<head><title th:text="${editing} ? #{products.edit} : #{products.new}">Product</title></head>
+<body>
+<th:block layout:fragment="content">
+  <div class="page-head"><h1 th:text="${editing} ? #{products.edit} : #{products.new}">Add product</h1></div>
+  <form th:action="${editing} ? @{/products/{id}(id=${productId})} : @{/products}" th:object="${form}" method="post" enctype="multipart/form-data" data-once>
+    <div class="row g-3">
+      <div class="col-lg-8">
+        <div class="card mb-3"><div class="card-header" th:text="#{products.section.basic}">Basic details</div><div class="card-body row g-3">
+          <div class="col-md-8"><label class="form-label" th:text="#{col.product}">Name</label><input class="form-control" th:field="*{name}" required maxlength="200"></div>
+          <div class="col-md-4"><label class="form-label">SKU</label><input class="form-control" th:field="*{sku}" maxlength="40" th:placeholder="#{products.sku.auto}"></div>
+          <div class="col-md-6"><label class="form-label" th:text="#{col.category}">Category</label>
+            <select class="form-select" th:field="*{categoryId}" required><option value="" th:text="#{common.choose}">Choose</option><option th:each="c : ${categories}" th:value="${c.id}" th:text="${c.name}">c</option></select></div>
+          <div class="col-md-6"><label class="form-label" th:text="#{col.brand}">Brand</label>
+            <select class="form-select" th:field="*{brandId}"><option value="" th:text="#{common.none}">None</option><option th:each="b : ${brands}" th:value="${b.id}" th:text="${b.name}">b</option></select></div>
+          <div class="col-md-6"><label class="form-label" th:text="#{products.fabric}">Fabric</label><input class="form-control" th:field="*{fabric}" maxlength="80"></div>
+          <div class="col-md-6"><label class="form-label" th:text="#{products.design}">Design / pattern</label><input class="form-control" th:field="*{design}" maxlength="80"></div>
+          <div class="col-12"><label class="form-label" th:text="#{products.description}">Description</label><textarea class="form-control" rows="2" th:field="*{description}" maxlength="1000"></textarea></div>
+        </div></div>
+
+        <div class="card mb-3"><div class="card-header" th:text="#{products.section.price}">Pricing &amp; tax</div><div class="card-body row g-3">
+          <div class="col-md-3"><label class="form-label" th:text="#{products.sellprice}">Selling price (₹)</label><input class="form-control text-end" th:field="*{sellingPrice}" inputmode="decimal" required></div>
+          <div class="col-md-3"><label class="form-label">MRP (₹)</label><input class="form-control text-end" th:field="*{mrp}" inputmode="decimal"></div>
+          <div class="col-md-3" sec:authorize="hasAuthority('COST_VIEW')"><label class="form-label" th:text="#{products.cost}">Cost price (₹)</label><input class="form-control text-end" th:field="*{purchaseCost}" inputmode="decimal"></div>
+          <div class="col-md-3" th:if="${shop.taxEnabled()}"><label class="form-label">GST %</label><input class="form-control text-end" th:field="*{taxRate}" inputmode="decimal"></div>
+          <div class="col-md-3" th:if="${shop.taxEnabled()}"><label class="form-label">HSN</label><input class="form-control" th:field="*{hsnCode}" maxlength="12"></div>
+          <div class="col-md-3"><label class="form-label" th:text="#{products.minstock}">Reorder level</label><input class="form-control text-end" th:field="*{minStock}" inputmode="numeric" th:placeholder="#{products.minstock.ph}"></div>
+          <div class="col-md-3"><label class="form-label" th:text="#{products.barcode}">Barcode</label><input class="form-control" th:field="*{barcode}" maxlength="60"></div>
+        </div></div>
+
+        <div class="card mb-3" th:unless="${editing}"><div class="card-header" th:text="#{products.section.variants}">Sizes &amp; colours</div><div class="card-body">
+          <div class="text-muted small mb-2" th:text="#{products.variants.help}">Tick every size and colour you stock. One variant is created for each combination.</div>
+          <div class="fw-semibold mb-1" th:text="#{col.size}">Sizes</div>
+          <div class="d-flex flex-wrap gap-2 mb-3">
+            <label class="chip" th:each="s : ${sizes}"><input class="form-check-input me-1" type="checkbox" name="sizeIds" th:value="${s.id}"><span th:text="${s.name}">M</span></label>
+          </div>
+          <div class="fw-semibold mb-1" th:text="#{col.colour}">Colours</div>
+          <div class="d-flex flex-wrap gap-2">
+            <label class="chip" th:each="c : ${colours}"><input class="form-check-input me-1" type="checkbox" name="colourIds" th:value="${c.id}">
+              <span th:if="${c.hexCode != null}" class="rounded-circle d-inline-block border" style="width:12px;height:12px" th:style="'width:12px;height:12px;background:' + ${c.hexCode}"></span><span th:text="${c.name}">Red</span></label>
+          </div>
+        </div></div>
+      </div>
+
+      <div class="col-lg-4">
+        <div class="card mb-3"><div class="card-header" th:text="#{products.image}">Photo</div><div class="card-body">
+          <input class="form-control" type="file" name="image" accept="image/png,image/jpeg,image/webp">
+          <div class="form-text" th:text="#{products.image.help}">PNG, JPG or WebP up to 2 MB.</div>
+        </div></div>
+        <div class="card mb-3"><div class="card-body">
+          <div class="form-check form-switch"><input class="form-check-input" type="checkbox" th:field="*{active}" id="active"><label class="form-check-label" for="active" th:text="#{status.active}">Active</label></div>
+        </div></div>
+        <div class="d-grid gap-2">
+          <button class="btn btn-primary btn-lg" type="submit"><i class="bi bi-check2 me-1"></i><span th:text="#{common.save}">Save</span></button>
+          <a class="btn btn-outline-secondary" th:href="${editing} ? @{/products/{id}(id=${productId})} : @{/products}" th:text="#{common.cancel}">Cancel</a>
+        </div>
+      </div>
+    </div>
+  </form>
+</th:block>
+</body>
+</html>

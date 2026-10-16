@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<!-- pager: <div th:replace="~{fragments/ui :: pager(${page})}"></div>; keeps the current query string -->
+<nav th:fragment="pager(page)" th:if="${page.totalPages() > 1}" class="d-flex justify-content-between align-items-center p-3 border-top">
+  <small class="text-muted" th:text="#{pager.showing(${page.from()}, ${page.to()}, ${page.total()})}">1–25 of 100</small>
+  <ul class="pagination pagination-sm mb-0">
+    <li class="page-item" th:classappend="${!page.hasPrevious()} ? 'disabled'">
+      <a class="page-link" th:href="@{${currentUri}(page=${page.page() - 1}, q=${param.q}, status=${param.status}, from=${param.from}, to=${param.to}, due=${param.due}, category=${param.category}, type=${param.type})}">‹</a></li>
+    <li class="page-item disabled"><span class="page-link" th:text="${page.page() + 1} + ' / ' + ${page.totalPages()}">1 / 4</span></li>
+    <li class="page-item" th:classappend="${!page.hasNext()} ? 'disabled'">
+      <a class="page-link" th:href="@{${currentUri}(page=${page.page() + 1}, q=${param.q}, status=${param.status}, from=${param.from}, to=${param.to}, due=${param.due}, category=${param.category}, type=${param.type})}">›</a></li>
+  </ul>
+</nav>
+
+<!-- sale status pill -->
+<span th:fragment="salePill(status, balance)" class="status-pill"
+      th:classappend="${status == 'CANCELLED'} ? 'pill-bad' : (${balance.signum() > 0} ? 'pill-warn' : 'pill-ok')"
+      th:text="${status == 'CANCELLED'} ? #{sale.status.cancelled} : (${balance.signum() > 0} ? #{sale.status.due} : #{sale.status.paid})">Paid</span>
+
+<!-- WhatsApp status pill -->
+<span th:fragment="waPill(status)" class="status-pill"
+      th:classappend="${status == 'FAILED'} ? 'pill-bad' : (${status == 'READ'} ? 'pill-ok' : (${status == 'DELIVERED'} ? 'pill-ok' : (${status == 'QUEUED'} ? 'pill-mute' : 'pill-info')))"
+      th:text="#{'wa.status.' + ${status}}">SENT</span>
+
+<div th:fragment="empty(icon, textKey)" class="empty"><i class="bi" th:classappend="'bi-' + ${icon}"></i><span th:text="#{${textKey}}">Nothing here</span></div>
+</body>
+</html>

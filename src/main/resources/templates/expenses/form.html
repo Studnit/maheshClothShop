@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout}">
+<head><title th:text="#{expense.new}">Expense</title></head>
+<body>
+<th:block layout:fragment="content">
+  <div class="page-head"><div><h1 th:text="${e != null} ? #{expense.edit} : #{expense.new}">Expense</h1></div></div>
+  <div class="row g-3"><div class="col-lg-8"><div class="card"><div class="card-body">
+    <form method="post" th:action="@{/expenses}" enctype="multipart/form-data" class="row g-3">
+      <input type="hidden" name="id" th:if="${e != null}" th:value="${e.id()}">
+      <div class="col-md-6"><label class="form-label" th:text="#{expense.category}">Category</label>
+        <select class="form-select" name="categoryId" required><option th:each="c : ${categories}" th:value="${c.id()}" th:text="${c.name()}" th:selected="${e != null and e.category() == c.name()}">c</option></select></div>
+      <div class="col-md-6"><label class="form-label" th:text="#{col.amount}">Amount</label><input class="form-control" type="number" step="0.01" min="0.01" name="amount" required th:value="${e != null} ? ${e.amount()}"></div>
+      <div class="col-md-6"><label class="form-label" th:text="#{col.date}">Date</label><input class="form-control" type="date" name="date" required th:value="${date}" th:max="${today}"></div>
+      <div class="col-md-6"><label class="form-label" th:text="#{col.method}">Method</label>
+        <select class="form-select" name="method" required><option th:each="m : ${methods}" th:value="${m.code()}" th:text="${m.name()}" th:selected="${e != null and e.method() == m.code()}">m</option></select></div>
+      <div class="col-12"><label class="form-label" th:text="#{col.description}">Description</label><input class="form-control" name="description" maxlength="300" th:value="${e != null} ? ${e.description()}"></div>
+      <div class="col-12"><label class="form-label" th:text="#{expense.receipt}">Receipt (optional)</label><input class="form-control" type="file" name="receipt" accept="image/*,application/pdf"></div>
+      <div class="col-12 d-flex gap-2"><button class="btn btn-primary" type="submit" th:text="#{action.save}">Save</button><a class="btn btn-outline-secondary" th:href="@{/expenses}" th:text="#{action.cancel}">Cancel</a></div>
+    </form></div></div></div>
+  <div class="col-lg-4"><div class="card"><div class="card-body"><h2 class="h6" th:text="#{expense.category.new}">New category</h2>
+    <form method="post" th:action="@{/expenses/categories}" class="input-group"><input class="form-control" name="name" required maxlength="80"><button class="btn btn-outline-primary" type="submit"><i class="bi bi-plus-lg"></i></button></form></div></div></div></div>
+</th:block>
+</body>
+</html>

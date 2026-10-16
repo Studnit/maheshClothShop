@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout}">
+<head><title th:text="#{nav.purchases}">Purchases</title></head>
+<body>
+<th:block layout:fragment="content">
+  <div class="page-head"><div><h1 th:text="#{nav.purchases}">Purchases</h1><div class="sub" th:text="#{purchases.sub}">Stock from suppliers</div></div>
+    <a class="btn btn-primary" th:href="@{/purchases/new}" sec:authorize="hasAuthority('PURCHASE_MANAGE')"><i class="bi bi-plus-lg me-1"></i><span th:text="#{dash.new.purchase}">New purchase</span></a></div>
+  <div class="card mb-3"><div class="card-body"><form class="filters" method="get" th:action="@{/purchases}">
+    <div><label class="form-label" th:text="#{filter.search}">Search</label><input class="form-control" name="q" th:value="${q}"></div>
+    <div><label class="form-label" th:text="#{nav.suppliers}">Supplier</label><select class="form-select" name="supplier"><option value="" th:text="#{filter.all}">All</option><option th:each="s : ${suppliers}" th:value="${s.id()}" th:selected="${s.id() == supplier}" th:text="${s.name()}">s</option></select></div>
+    <div><label class="form-label" th:text="#{col.status}">Status</label><select class="form-select" name="status"><option value="" th:text="#{filter.all}">All</option>
+      <option th:each="s : ${T(java.util.List).of('DRAFT','RECEIVED','CANCELLED')}" th:value="${s}" th:selected="${s == status}" th:text="#{'purchase.status.' + ${s}}">s</option></select></div>
+    <div><label class="form-label" th:text="#{filter.from}">From</label><input class="form-control" type="date" name="from" th:value="${from}"></div>
+    <div><label class="form-label" th:text="#{filter.to}">To</label><input class="form-control" type="date" name="to" th:value="${to}"></div>
+    <div><button class="btn btn-primary" type="submit"><i class="bi bi-funnel me-1"></i><span th:text="#{filter.apply}">Apply</span></button></div></form></div></div>
+  <div class="card"><div class="table-responsive"><table class="table table-hover mb-0">
+    <thead><tr><th th:text="#{col.date}">Date</th><th>No.</th><th th:text="#{nav.suppliers}">Supplier</th><th th:text="#{purchase.supplier.invoice}">Supplier bill</th><th class="text-end" th:text="#{col.total}">Total</th><th class="text-end" th:text="#{suppliers.balance}">Balance</th><th th:text="#{col.status}">Status</th></tr></thead>
+    <tbody>
+      <tr th:each="r : ${page.items()}"><td th:text="${@fmt.date(r.date())}">d</td>
+        <td><a class="fw-semibold" th:href="@{/purchases/{id}(id=${r.id()})}" th:text="${r.purchaseNo()}">PUR</a></td><td th:text="${r.supplierName()}">s</td><td th:text="${r.supplierInvoiceNo()}">i</td>
+        <td class="text-end money" th:text="${@fmt.money(r.total())}">0</td>
+        <td class="text-end money" th:text="${r.status() == 'RECEIVED' and r.outstanding().signum() != 0} ? ${@fmt.money(r.outstanding())} : '–'">–</td>
+        <td><span class="status-pill" th:classappend="${r.status() == 'RECEIVED'} ? 'pill-ok' : (${r.status() == 'DRAFT'} ? 'pill-warn' : 'pill-mute')" th:text="#{'purchase.status.' + ${r.status()}}">s</span></td></tr>
+      <tr th:if="${#lists.isEmpty(page.items())}"><td colspan="7"><div th:replace="~{fragments/ui :: empty('truck', 'purchases.empty')}"></div></td></tr>
+    </tbody></table></div>
+    <div th:replace="~{fragments/ui :: pager(${page})}"></div></div>
+</th:block>
+</body>
+</html>

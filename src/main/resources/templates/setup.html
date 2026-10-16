@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en" th:lang="${lang}" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <title th:text="#{setup.title}">First-time setup</title>
+  <link rel="icon" type="image/png" th:href="@{/icons/favicon-32.png}">
+  <script th:src="@{/js/theme-init.js}"></script>
+  <link rel="stylesheet" th:href="@{/vendor/bootstrap/bootstrap.min.css}">
+  <link rel="stylesheet" th:href="@{/vendor/bootstrap-icons/bootstrap-icons.min.css}">
+  <link rel="stylesheet" th:href="@{/css/app.css}">
+</head>
+<body>
+<div class="login-wrap">
+  <div class="card login-card" style="max-width:480px">
+    <div class="d-flex justify-content-between align-items-start mb-3">
+      <div><h1 class="h4 fw-bold mb-1" th:text="#{setup.title}">First-time setup</h1>
+        <div class="text-muted small" th:text="#{setup.intro}">Create the owner account.</div></div>
+      <div class="lang-switch"><a th:href="@{${currentUri}(lang='en')}" th:classappend="${uiLang == 'en'} ? 'active'">EN</a><a th:href="@{${currentUri}(lang='mr')}" th:classappend="${uiLang == 'mr'} ? 'active'">मराठी</a><a th:href="@{${currentUri}(lang='both')}" th:classappend="${uiLang == 'both'} ? 'active'" title="English + मराठी">EN+म</a></div>
+    </div>
+    <div class="alert alert-danger py-2" th:if="${errorKey != null}" th:text="${@msg.get(errorKey, errorArgs)}"></div>
+    <form th:action="@{/setup}" th:object="${form}" method="post" data-once>
+      <div class="mb-3"><label class="form-label" th:text="#{user.fullname}">Full name</label>
+        <input th:field="*{fullName}" class="form-control" required>
+        <div class="text-danger small" th:if="${#fields.hasErrors('fullName')}" th:text="#{validation.required}"></div></div>
+      <div class="mb-3"><label class="form-label" th:text="#{login.username}">Username</label>
+        <input th:field="*{username}" class="form-control" autocomplete="username" required></div>
+      <div class="row g-3 mb-3">
+        <div class="col-sm-6"><label class="form-label" th:text="#{login.password}">Password</label>
+          <input type="password" th:field="*{password}" class="form-control" autocomplete="new-password" required></div>
+        <div class="col-sm-6"><label class="form-label" th:text="#{user.password.confirm}">Confirm password</label>
+          <input type="password" th:field="*{confirmPassword}" class="form-control" autocomplete="new-password" required></div>
+      </div>
+      <div class="form-text mb-3" th:text="#{user.password.rules}">At least 10 characters.</div>
+      <div class="mb-3" th:if="${tokenRequired}"><label class="form-label" th:text="#{setup.token}">Setup token</label>
+        <input th:field="*{setupToken}" class="form-control" autocomplete="off">
+        <div class="form-text" th:text="#{setup.token.help}">Ask whoever deployed the app for APP_SETUP_TOKEN.</div></div>
+      <button class="btn btn-primary w-100" type="submit" th:text="#{setup.submit}">Create owner account</button>
+    </form>
+  </div>
+</div>
+<script th:src="@{/js/app.js}"></script>
+</body></html>

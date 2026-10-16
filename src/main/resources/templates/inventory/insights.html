@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout}">
+<head><title th:text="#{nav.insights}">Stock insights</title></head>
+<body>
+<th:block layout:fragment="content">
+  <div class="page-head">
+    <div><h1 th:text="#{nav.insights}">Stock insights</h1><div class="sub" th:text="#{insights.sub}">What to reorder, what is not selling, and where your money is</div></div>
+    <a class="btn btn-outline-secondary" th:href="@{/inventory/labels}"><i class="bi bi-upc me-1"></i><span th:text="#{labels.print}">Print labels</span></a>
+  </div>
+
+  <div class="row g-3 mb-3">
+    <div class="col-lg-4"><div class="card h-100"><div class="card-header" th:text="#{dash.stock.health}">Stock health</div><div class="card-body">
+      <div class="display-5 fw-bold" th:text="${summary.healthyPercent()} + '%'">100%</div>
+      <div class="stock-bar my-2" style="height:14px">
+        <span class="bg-success" th:style="'width:' + ${summary.variants() == 0 ? 0 : summary.ok() * 100 / summary.variants()} + '%'"></span>
+        <span class="bg-warning" th:style="'width:' + ${summary.variants() == 0 ? 0 : summary.low() * 100 / summary.variants()} + '%'"></span>
+        <span class="bg-danger" th:style="'width:' + ${summary.variants() == 0 ? 0 : summary.out() * 100 / summary.variants()} + '%'"></span></div>
+      <div class="small"><span class="text-success fw-semibold" th:text="${summary.ok()} + ' ' + #{stock.status.ok}">ok</span> ·
+        <span class="text-warning fw-semibold" th:text="${summary.low()} + ' ' + #{stock.status.low}">low</span> ·
+        <span class="text-danger fw-semibold" th:text="${summary.out()} + ' ' + #{stock.status.out}">out</span></div>
+      <div class="small text-muted mt-2" th:text="#{insights.damaged(${summary.damagedUnits()})}">damaged</div>
+    </div></div></div>
+    <div class="col-lg-8"><div class="card h-100"><div class="card-header" th:text="#{insights.value.category}">Stock value by category</div>
+      <div class="table-responsive"><table class="table mb-0">
+        <thead><tr><th th:text="#{col.category}">Category</th><th class="text-end" th:text="#{dash.units}">Items</th><th class="text-end" sec:authorize="hasAuthority('COST_VIEW')" th:text="#{col.value}">Value</th></tr></thead>
+        <tbody>
+          <tr th:each="c : ${byCategory}"><td th:text="${c.category()}">c</td><td class="text-end num" th:text="${@fmt.number(c.units())}">0</td><td class="text-end money" sec:authorize="hasAuthority('COST_VIEW')" th:text="${@fmt.money(c.value())}">0</td></tr>
+        </tbody></table></div></div></div>
+  </div>
+
+  <div class="card mb-3">
+    <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2"><span><i class="bi bi-grid-3x3-gap me-1"></i><span th:text="#{insights.matrix}">Size × colour grid</span></span>
+      <form method="get" th:action="@{/inventory/insights}"><select class="form-select form-select-sm" name="product" data-autosubmit>
+        <option th:each="o : ${productOptions}" th:value="${o.id()}" th:selected="${o.id() == product}" th:text="${o.name()}">p</option></select></form></div>
+    <div class="table-responsive" th:if="${matrixRows != null and !matrixRows.isEmpty()}"><table class="table matrix mb-0">
+      <thead><tr><th class="text-start" th:text="#{col.colour}">Colour</th><th th:each="s : ${matrixSizes}" th:text="${s}">M</th></tr></thead>
+      <tbody>
+        <tr th:each="row : ${matrixRows}">
+          <th class="text-start" th:text="${row.key}">Red</th>
+          <td th:each="s : ${matrixSizes}" th:with="cell=${row.value.get(s)}"
+              th:classappend="${cell == null} ? 'text-muted' : (${cell.qty() == 0} ? 'zero' : (${cell.qty() <= cell.minStock()} ? 'low' : ''))"
+              th:text="${cell == null} ? '·' : ${cell.qty()}">3</td>
+        </tr>
+      </tbody></table></div>
+    <div class="empty" th:if="${matrixRows == null or matrixRows.isEmpty()}"><i class="bi bi-grid"></i><span th:text="#{insights.matrix.empty}">No variants</span></div>
+  </div>
+
+  <div class="row g-3 mb-3">
+    <div class="col-xl-7"><div class="card h-100">
+      <div class="card-header"><i class="bi bi-cart-plus me-1"></i><span th:text="#{insights.reorder}">Reorder suggestions</span> <small class="text-muted" th:text="#{insights.reorder.help}">based on last 30 days</small></div>
+      <div class="table-responsive"><table class="table table-hover mb-0">
+        <thead><tr><th th:text="#{col.product}">Product</th><th th:text="#{col.size}">Size</th><th th:text="#{col.colour}">Colour</th><th class="text-end" th:text="#{col.available}">Left</th><th class="text-end" th:text="#{insights.days.cover}">Days left</th><th class="text-end" th:text="#{insights.suggested}">Order</th></tr></thead>
+        <tbody>
+          <tr th:each="r : ${reorder}"><td th:text="${r.productName()}">p</td><td th:text="${r.sizeName()}">M</td><td th:text="${r.colourName()}">c</td>
+            <td class="text-end num" th:text="${r.available()}">0</td><td class="text-end num" th:text="${r.daysCover()}">0</td>
+            <td class="text-end"><span class="status-pill pill-info" th:text="'+' + ${r.suggested()}">+10</span></td></tr>
+          <tr th:if="${#lists.isEmpty(reorder)}"><td colspan="6"><div th:replace="~{fragments/ui :: empty('check2-circle', 'dash.empty.low')}"></div></td></tr>
+        </tbody></table></div></div></div>
+    <div class="col-xl-5"><div class="card h-100">
+      <div class="card-header"><i class="bi bi-lightning-charge me-1"></i><span th:text="#{insights.fast}">Fast movers (30 days)</span></div>
+      <div class="table-responsive"><table class="table table-hover mb-0">
+        <thead><tr><th th:text="#{col.product}">Product</th><th class="text-end" th:text="#{col.sold}">Sold</th><th class="text-end" th:text="#{col.available}">Left</th></tr></thead>
+        <tbody>
+          <tr th:each="r : ${fast}"><td><span th:text="${r.productName()}">p</span><small class="d-block text-muted" th:text="${@fmt.variant(r.colourName(), r.sizeName())}">c</small></td>
+            <td class="text-end num fw-semibold" th:text="${r.sold()}">0</td><td class="text-end num" th:text="${r.available()}">0</td></tr>
+          <tr th:if="${#lists.isEmpty(fast)}"><td colspan="3"><div th:replace="~{fragments/ui :: empty('lightning', 'dash.empty.sales')}"></div></td></tr>
+        </tbody></table></div></div></div>
+  </div>
+
+  <div class="card">
+    <div class="card-header"><i class="bi bi-hourglass-split me-1"></i><span th:text="#{insights.dead}">Not selling (60+ days)</span> <small class="text-muted" th:text="#{insights.dead.help}">money tied up on the shelf</small></div>
+    <div class="table-responsive"><table class="table table-hover mb-0">
+      <thead><tr><th th:text="#{col.product}">Product</th><th th:text="#{col.size}">Size</th><th th:text="#{col.colour}">Colour</th><th class="text-end" th:text="#{col.available}">Stock</th><th class="text-end" th:text="#{insights.idle.days}">Idle days</th><th class="text-end" sec:authorize="hasAuthority('COST_VIEW')" th:text="#{col.value}">Value</th></tr></thead>
+      <tbody>
+        <tr th:each="r : ${dead}"><td th:text="${r.productName()}">p</td><td th:text="${r.sizeName()}">M</td><td th:text="${r.colourName()}">c</td>
+          <td class="text-end num" th:text="${r.available()}">0</td><td class="text-end num" th:text="${r.daysIdle()}">90</td>
+          <td class="text-end money" sec:authorize="hasAuthority('COST_VIEW')" th:text="${@fmt.money(r.value())}">0</td></tr>
+        <tr th:if="${#lists.isEmpty(dead)}"><td colspan="6"><div th:replace="~{fragments/ui :: empty('emoji-smile', 'insights.dead.none')}"></div></td></tr>
+      </tbody></table></div>
+  </div>
+</th:block>
+</body>
+</html>

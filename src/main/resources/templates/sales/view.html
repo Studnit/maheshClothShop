@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout}">
+<head><title th:text="${inv.invoiceNo}">Invoice</title></head>
+<body>
+<th:block layout:fragment="content">
+  <div class="page-head">
+    <div>
+      <h1><span th:text="${inv.invoiceNo}">INV</span> <span th:replace="~{fragments/ui :: salePill(${inv.status.name()}, ${inv.balanceDue})}"></span></h1>
+      <div class="sub"><span th:text="${@fmt.dateTime(inv.saleTime)}">time</span> · <span th:text="${inv.createdBy}">cashier</span></div>
+    </div>
+    <div class="d-flex gap-2 flex-wrap no-print">
+      <a class="btn btn-outline-primary" target="_blank" th:href="@{/sales/{id}/print(id=${inv.id})}" sec:authorize="hasAuthority('INVOICE_PRINT')"><i class="bi bi-printer me-1"></i><span th:text="#{pos.done.print}">Print A4</span></a>
+      <a class="btn btn-outline-primary" target="_blank" th:href="@{/sales/{id}/receipt(id=${inv.id})}" sec:authorize="hasAuthority('INVOICE_PRINT')"><i class="bi bi-receipt me-1"></i><span th:text="#{pos.done.thermal}">Receipt</span></a>
+      <a class="btn btn-outline-secondary" th:href="@{/sales/{id}/pdf(id=${inv.id})}"><i class="bi bi-file-earmark-pdf me-1"></i>PDF</a>
+      <a class="btn btn-success" th:href="@{/sales/{id}/whatsapp(id=${inv.id})}" target="_blank" rel="noopener" sec:authorize="hasAuthority('WHATSAPP_SEND')" th:if="${inv.status.name() == 'COMPLETED'}"><i class="bi bi-whatsapp me-1"></i><span th:text="#{pos.done.wa.share}">Send on WhatsApp</span></a>
+      <span class="btn-group" sec:authorize="hasAuthority('WHATSAPP_SEND')" th:if="${inv.status.name() == 'COMPLETED'}">
+        <a class="btn btn-outline-success btn-sm" th:href="@{/sales/{id}/whatsapp(id=${inv.id}, lang='en')}" target="_blank" rel="noopener">EN</a>
+        <a class="btn btn-outline-success btn-sm" th:href="@{/sales/{id}/whatsapp(id=${inv.id}, lang='mr')}" target="_blank" rel="noopener">मराठी</a></span>
+      <a class="btn btn-outline-warning" th:href="@{/returns/new(invoice=${inv.id})}" sec:authorize="hasAuthority('RETURN_PROCESS')" th:if="${inv.status.name() == 'COMPLETED'}"><i class="bi bi-arrow-return-left me-1"></i><span th:text="#{nav.returns}">Return</span></a>
+    </div>
+  </div>
+
+  <div class="row g-3">
+    <div class="col-lg-8">
+      <div class="card mb-3">
+        <div class="table-responsive"><table class="table mb-0">
+          <thead><tr><th th:text="#{col.product}">Product</th><th class="text-end" th:text="#{col.qty}">Qty</th><th class="text-end" th:text="#{col.rate}">Rate</th>
+            <th class="text-end" th:text="#{col.discount}">Disc.</th><th class="text-end" th:text="#{col.total}">Total</th><th class="text-end" th:text="#{col.returned}">Returned</th></tr></thead>
+          <tbody>
+            <tr th:each="l : ${lines}">
+              <td><div class="fw-semibold" th:text="${l.productName()}">p</div><small class="text-muted" th:text="${l.sku()} + (${l.colourName()} != null ? ' · ' + ${l.colourName()} : '') + (${l.sizeName()} != null ? ' · ' + ${l.sizeName()} : '')">sku</small></td>
+              <td class="text-end num" th:text="${l.quantity()}">1</td>
+              <td class="text-end money" th:text="${@fmt.money(l.unitPrice())}">0</td>
+              <td class="text-end money" th:text="${@fmt.money(l.lineDiscount().add(l.invoiceDiscountShare()))}">0</td>
+              <td class="text-end money fw-semibold" th:text="${@fmt.money(l.lineTotal())}">0</td>
+              <td class="text-end"><span th:if="${l.returnedQty() > 0}" class="status-pill pill-warn" th:text="${l.returnedQty()} + ' / ' + ${l.quantity()}">1</span></td>
+            </tr>
+          </tbody>
+        </table></div>
+      </div>
+
+      <div class="card mb-3" th:if="${!#lists.isEmpty(messages)}">
+        <div class="card-header"><i class="bi bi-whatsapp wa-ico me-1"></i><span th:text="#{wa.history}">WhatsApp history</span></div>
+        <ul class="list-group list-group-flush">
+          <li class="list-group-item d-flex justify-content-between align-items-center" th:each="m : ${messages}">
+            <div><span th:replace="~{fragments/ui :: waPill(${m.status()})}"></span>
+              <span class="ms-2" th:text="${m.mode() == 'API'} ? #{wa.mode.api} : #{wa.mode.link}">API</span>
+              <span class="text-muted small ms-2" th:text="${@fmt.dateTime(m.createdAt())}">time</span>
+              <div class="small text-danger" th:if="${m.error() != null}" th:text="${m.error()}"></div></div>
+            <form th:if="${m.status() == 'FAILED' and waApi}" th:action="@{/whatsapp/{id}/resend(id=${m.id()})}" method="post" sec:authorize="hasAuthority('WHATSAPP_HISTORY')">
+              <input type="hidden" name="back" th:value="'/sales/' + ${inv.id}">
+              <button class="btn btn-sm btn-outline-primary" type="submit"><i class="bi bi-arrow-repeat"></i> <span th:text="#{wa.retry}">Retry</span></button>
+            </form>
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="col-lg-4">
+      <div class="card mb-3"><div class="card-body">
+        <div class="text-muted small" th:text="#{col.customer}">Customer</div>
+        <div class="fw-semibold" th:text="${inv.customerName != null ? inv.customerName : #messages.msg('customer.walkin')}">Walk-in</div>
+        <div class="small" th:text="${inv.customerPhone}">phone</div>
+        <a class="small" th:if="${inv.customerId != null}" sec:authorize="hasAuthority('CUSTOMER_VIEW')" th:href="@{/customers/{id}(id=${inv.customerId})}" th:text="#{customer.open}">Open customer</a>
+        <hr>
+        <dl class="row mb-0">
+          <dt class="col-6 fw-normal text-muted" th:text="#{pos.subtotal}">Subtotal</dt><dd class="col-6 text-end money" th:text="${@fmt.money(inv.subtotal)}">0</dd>
+          <dt class="col-6 fw-normal text-muted" th:text="#{pos.discount}">Discount</dt><dd class="col-6 text-end money" th:text="${@fmt.money(inv.lineDiscountTotal.add(inv.invoiceDiscount))}">0</dd>
+          <dt class="col-6 fw-normal text-muted" th:if="${shop.taxEnabled()}" th:text="#{pos.tax}">GST</dt><dd class="col-6 text-end money" th:if="${shop.taxEnabled()}" th:text="${@fmt.money(inv.taxTotal)}">0</dd>
+          <dt class="col-6 fw-normal text-muted" th:if="${inv.roundOff.signum() != 0}" th:text="#{pos.roundoff}">Round off</dt><dd class="col-6 text-end money" th:if="${inv.roundOff.signum() != 0}" th:text="${@fmt.money(inv.roundOff)}">0</dd>
+          <dt class="col-6">Total</dt><dd class="col-6 text-end money fw-bold fs-5" th:text="${@fmt.money(inv.total)}">0</dd>
+          <dt class="col-6 fw-normal text-muted" th:text="#{sale.paid}">Paid</dt><dd class="col-6 text-end money text-success" th:text="${@fmt.money(inv.amountPaid)}">0</dd>
+          <dt class="col-6 fw-normal text-muted" th:if="${inv.balanceDue.signum() > 0}" th:text="#{col.due}">Due</dt><dd class="col-6 text-end money text-danger fw-bold" th:if="${inv.balanceDue.signum() > 0}" th:text="${@fmt.money(inv.balanceDue)}">0</dd>
+        </dl>
+      </div></div>
+
+      <div class="card mb-3"><div class="card-header" th:text="#{sale.payments}">Payments</div>
+        <ul class="list-group list-group-flush">
+          <li class="list-group-item d-flex justify-content-between" th:each="p : ${payments}">
+            <span><span th:text="${p.methodName()}">Cash</span> <small class="text-muted" th:if="${p.kind() == 'BALANCE'}" th:text="'· ' + #{sale.payment.later}">later</small>
+              <small class="text-muted d-block" th:text="${@fmt.dateTime(p.at())}">t</small></span>
+            <span class="money" th:text="${@fmt.money(p.amount())}">0</span></li>
+          <li class="list-group-item d-flex justify-content-between text-warning" th:each="r : ${refunds}">
+            <span th:text="#{sale.refund} + ' ' + ${r.refundNo()}">Refund</span><span class="money" th:text="'-' + ${@fmt.money(r.amount())}">0</span></li>
+        </ul>
+        <form class="card-body border-top" th:if="${inv.status.name() == 'COMPLETED' and inv.balanceDue.signum() > 0}" th:action="@{/sales/{id}/payments(id=${inv.id})}" method="post" data-once sec:authorize="hasAuthority('SALE_CREATE')">
+          <div class="fw-semibold mb-2" th:text="#{sale.collect}">Collect payment</div>
+          <div class="row g-2">
+            <div class="col-5"><select class="form-select form-select-sm" name="method"><option th:each="m : ${methods}" th:value="${m.code()}" th:text="${m.name()}">Cash</option></select></div>
+            <div class="col-4"><input class="form-control form-control-sm text-end" name="amount" inputmode="decimal" th:value="${inv.balanceDue}" required></div>
+            <div class="col-3"><button class="btn btn-sm btn-primary w-100" type="submit" th:text="#{common.save}">Save</button></div>
+            <div class="col-12"><input class="form-control form-control-sm" name="reference" th:placeholder="#{pos.reference}"></div>
+          </div>
+        </form>
+      </div>
+
+      <div class="card border-danger" th:if="${inv.status.name() == 'COMPLETED'}" sec:authorize="hasAuthority('SALE_CANCEL')">
+        <div class="card-body">
+          <div class="fw-semibold text-danger mb-2"><i class="bi bi-x-octagon me-1"></i><span th:text="#{sale.cancel.title}">Cancel this bill</span></div>
+          <form th:action="@{/sales/{id}/cancel(id=${inv.id})}" method="post" data-once>
+            <input class="form-control form-control-sm mb-2" name="reason" required maxlength="300" th:placeholder="#{sale.cancel.reason}">
+            <select class="form-select form-select-sm mb-2" name="refundMethod" th:if="${inv.amountPaid.signum() > 0}"><option th:each="m : ${methods}" th:value="${m.code()}" th:text="#{sale.refund.via(${m.name()})}">Cash</option></select>
+            <button class="btn btn-sm btn-outline-danger w-100" type="submit" th:attr="data-confirm=#{sale.cancel.confirm}" th:text="#{sale.cancel.btn}">Cancel bill</button>
+          </form>
+        </div>
+      </div>
+      <div class="card" th:if="${inv.status.name() == 'CANCELLED'}"><div class="card-body small">
+        <div class="fw-semibold text-danger" th:text="#{sale.status.cancelled}">Cancelled</div>
+        <div th:text="${inv.cancelReason}"></div><div class="text-muted" th:text="${inv.cancelledBy} + ' · ' + ${@fmt.dateTime(inv.cancelledAt)}"></div></div></div>
+    </div>
+  </div>
+</th:block>
+</body>
+</html>

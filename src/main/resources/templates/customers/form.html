@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout}">
+<head><title th:text="${editing} ? #{customers.edit} : #{customers.new}">Customer</title></head>
+<body>
+<th:block layout:fragment="content">
+  <div class="page-head"><h1 th:text="${editing} ? #{customers.edit} : #{customers.new}">Add customer</h1></div>
+  <div class="row"><div class="col-lg-7"><div class="card"><form class="card-body row g-3" th:action="${editing} ? @{/customers/{id}(id=${customerId})} : @{/customers}" th:object="${form}" method="post" data-once>
+    <div class="col-md-7"><label class="form-label" th:text="#{col.name}">Name</label><input class="form-control" th:field="*{name}" required maxlength="160"></div>
+    <div class="col-md-5"><label class="form-label" th:text="#{customers.whatsapp.phone}">Mobile (WhatsApp)</label><input class="form-control" th:field="*{phone}" inputmode="tel" maxlength="20"></div>
+    <div class="col-12"><label class="form-label" th:text="#{col.address}">Address</label><input class="form-control" th:field="*{address}" maxlength="300"></div>
+    <div class="col-md-6" th:if="${creditEnabled}"><label class="form-label" th:text="#{customers.credit.limit}">Credit limit (₹)</label><input class="form-control text-end" th:field="*{creditLimit}" inputmode="decimal"><div class="form-text" th:text="#{customers.credit.help}">Leave empty for no limit.</div></div>
+    <div class="col-12"><label class="form-label" th:text="#{col.notes}">Notes</label><textarea class="form-control" rows="2" th:field="*{notes}" maxlength="500"></textarea></div>
+    <div class="col-12"><div class="form-check form-switch"><input class="form-check-input" type="checkbox" th:field="*{active}" id="active"><label class="form-check-label" for="active" th:text="#{status.active}">Active</label></div></div>
+    <div class="col-12 d-flex gap-2"><button class="btn btn-primary" type="submit" th:text="#{common.save}">Save</button><a class="btn btn-outline-secondary" th:href="@{/customers}" th:text="#{common.cancel}">Cancel</a></div>
+  </form></div></div></div>
+</th:block>
+</body>
+</html>

@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout}">
+<head><title th:text="#{admin.user.new}">User</title></head>
+<body>
+<th:block layout:fragment="content">
+  <div class="page-head"><div><h1 th:text="${editing} ? #{admin.user.edit} : #{admin.user.new}">User</h1></div></div>
+  <div class="card" style="max-width:720px"><div class="card-body">
+    <form method="post" th:action="@{/admin/users}" th:object="${form}" class="row g-3">
+      <input type="hidden" th:field="*{id}">
+      <div class="col-md-6"><label class="form-label" th:text="#{admin.user.username}">Username</label><input class="form-control" th:field="*{username}" required maxlength="60" th:readonly="${editing}"></div>
+      <div class="col-md-6"><label class="form-label" th:text="#{admin.user.fullname}">Full name</label><input class="form-control" th:field="*{fullName}" required maxlength="120"></div>
+      <div class="col-md-6"><label class="form-label">Email</label><input class="form-control" type="email" th:field="*{email}"></div>
+      <div class="col-md-6"><label class="form-label" th:text="#{col.phone}">Phone</label><input class="form-control" th:field="*{phone}"></div>
+      <div class="col-md-6"><label class="form-label" th:text="#{admin.user.role}">Role</label><select class="form-select" th:field="*{roleId}"><option th:each="r : ${roles}" th:value="${r.id}" th:text="${r.name}">r</option></select></div>
+      <div class="col-md-6"><label class="form-label" th:text="${editing} ? #{admin.user.password.reset} : #{admin.user.password}">Password</label><input class="form-control" type="password" th:field="*{password}" autocomplete="new-password" th:required="${!editing}"><div class="form-text" th:text="#{admin.user.password.help}">At least 8 characters.</div></div>
+      <div class="col-12" th:if="${editing}"><div class="form-check form-switch"><input class="form-check-input" type="checkbox" th:field="*{enabled}"><label class="form-check-label" for="enabled1" th:text="#{admin.user.enabled}">Can sign in</label></div></div>
+      <div class="col-12 d-flex gap-2"><button class="btn btn-primary" type="submit" th:text="#{action.save}">Save</button><a class="btn btn-outline-secondary" th:href="@{/admin/users}" th:text="#{action.cancel}">Cancel</a></div>
+    </form>
+    <form th:if="${editing and locked}" method="post" th:action="@{/admin/users/{id}/unlock(id=${form.id})}" class="mt-3"><button class="btn btn-outline-warning" type="submit"><i class="bi bi-unlock me-1"></i><span th:text="#{admin.user.unlock}">Unlock account</span></button></form>
+  </div></div>
+</th:block>
+</body>
+</html>

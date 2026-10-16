@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout}">
+<head><title th:text="#{nav.pos}">New Bill</title></head>
+<body>
+<th:block layout:fragment="content">
+<div id="posRoot"
+     th:data-max-discount="${maxDiscountPercent}" th:data-wa-auto="${waAuto}" th:data-country="${waDefaultCountry}"
+     th:data-can-credit="${creditEnabled}"
+     th:data-exchange-id="${exchange != null} ? ${exchange.id()}" th:data-exchange-credit="${exchange != null} ? ${exchange.creditLeft()}"
+     th:data-t-empty="#{pos.cart.empty}" th:data-t-none="#{pos.no.results}" th:data-t-out="#{pos.out}"
+     th:data-t-left="#{pos.left}" th:data-t-exact="#{pos.pay.exact}" th:data-t-change="#{pos.change}"
+     th:data-t-short="#{pos.short}" th:data-t-due="#{pos.due.label}" th:data-t-walkin="#{customer.walkin}"
+     th:data-t-held="#{pos.held.saved}" th:data-t-clear="#{pos.confirm.clear}" th:data-t-resume="#{pos.resumed}"
+     th:data-t-added="#{pos.customer.added}" th:data-t-ref="#{pos.reference}" th:data-t-nostock="#{pos.nostock}"
+     th:data-t-phone="#{pos.phone.invalid}" th:data-t-paidmore="#{pos.paid.more}" th:data-t-add="#{pos.add.to.cart}">
+
+  <div class="page-head">
+    <div><h1 th:text="#{nav.pos}">New Bill</h1>
+      <div class="sub" th:text="#{pos.hint}">Press F2 to search, F9 to complete the bill</div></div>
+    <div class="d-flex gap-2 align-items-center">
+      <div class="dropdown">
+        <button class="btn btn-outline-secondary btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown"><i class="bi bi-clock-history me-1"></i><span th:text="#{pos.held}">Held bills</span> <span class="badge text-bg-primary" id="heldCount">0</span></button>
+        <ul class="dropdown-menu dropdown-menu-end" id="heldList" style="min-width:260px"></ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="pos">
+    <!-- LEFT: products table -->
+    <section class="card pos-products">
+      <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2">
+          <div><strong th:text="#{pos.products}">Products</strong> <span class="text-muted small"><span th:text="#{pos.showing}">Showing</span> <span id="resCount">0</span> <span th:text="#{pos.results}">results</span></span></div>
+          <div class="d-flex align-items-center gap-2"><label class="small text-muted mb-0" for="fSort" th:text="#{pos.sort}">Sort by</label>
+            <select id="fSort" class="form-select form-select-sm w-auto">
+              <option value="name" th:text="#{pos.sort.name}">Name</option>
+              <option value="priceAsc" th:text="#{pos.sort.price.low}">Price low</option>
+              <option value="priceDesc" th:text="#{pos.sort.price.high}">Price high</option>
+              <option value="stock" th:text="#{pos.sort.stock}">Stock</option>
+            </select></div>
+        </div>
+        <div class="input-group mb-2">
+          <span class="input-group-text bg-transparent"><i class="bi bi-upc-scan"></i></span>
+          <input id="q" class="form-control shadow-none" type="search" autocomplete="off" autofocus
+                 th:placeholder="#{pos.search.placeholder}" th:aria-label="#{pos.search.placeholder}">
+        </div>
+        <div class="row g-2 mb-3 align-items-center">
+          <div class="col-6 col-md-3"><select id="fCat" class="form-select form-select-sm" th:aria-label="#{pos.filter.category}">
+            <option value="" th:text="#{pos.filter.all.categories}">All Categories</option>
+            <option th:each="c : ${categories}" th:value="${c.id}" th:text="${c.name}"></option></select></div>
+          <div class="col-6 col-md-3"><select id="fSize" class="form-select form-select-sm" th:aria-label="#{pos.filter.size}">
+            <option value="" th:text="#{pos.filter.all.sizes}">All Sizes</option></select></div>
+          <div class="col-6 col-md-3"><select id="fColour" class="form-select form-select-sm" th:aria-label="#{pos.filter.colour}">
+            <option value="" th:text="#{pos.filter.all.colours}">All Colours</option></select></div>
+          <div class="col-6 col-md-3"><div class="form-check form-switch mb-0">
+            <input class="form-check-input" type="checkbox" id="fAvail"><label class="form-check-label small" for="fAvail" th:text="#{pos.filter.available}">Available only</label></div></div>
+        </div>
+        <div class="table-responsive pos-table-wrap">
+          <table class="table table-hover align-middle mb-0 pos-table">
+            <thead><tr>
+              <th th:text="#{pos.col.product}">Product</th><th th:text="#{pos.col.size}">Size</th><th th:text="#{pos.col.colour}">Colour</th>
+              <th class="text-end" th:text="#{pos.col.stock}">Stock</th><th class="text-end" th:text="#{pos.col.price}">Price</th><th></th></tr></thead>
+            <tbody id="results" aria-live="polite"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- RIGHT: current bill -->
+    <aside class="cart">
+      <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <span><strong th:text="#{pos.current.bill}">Current Bill</strong> <span class="badge text-bg-secondary" id="cartCount">0</span> <span class="small text-muted" th:text="#{pos.items}">items</span></span>
+          <button class="btn btn-sm btn-link text-danger p-0" type="button" id="clearBtn"><i class="bi bi-trash"></i> <span th:text="#{pos.clear}">Clear</span></button>
+        </div>
+
+        <div class="p-3 border-bottom">
+          <div id="custPicked" class="d-none d-flex justify-content-between align-items-center">
+            <div><div class="fw-semibold" id="custName"></div><div class="small text-muted" id="custInfo"></div></div>
+            <button class="btn btn-sm btn-outline-secondary" type="button" id="custRemove"><i class="bi bi-x-lg"></i></button>
+          </div>
+          <div id="custSearch">
+            <div class="position-relative">
+              <input id="custQ" class="form-control form-control-sm" autocomplete="off" th:placeholder="#{pos.customer.search}">
+              <div id="custList" class="list-group position-absolute w-100 shadow d-none" style="z-index:20"></div>
+            </div>
+            <div class="row g-2 mt-1">
+              <div class="col-6"><input id="walkName" class="form-control form-control-sm" th:placeholder="#{pos.walkin.name}"></div>
+              <div class="col-6"><input id="walkPhone" class="form-control form-control-sm" inputmode="tel" th:placeholder="#{pos.walkin.phone}"></div>
+            </div>
+            <button class="btn btn-link btn-sm p-0 mt-1" type="button" id="custAdd" sec:authorize="hasAuthority('CUSTOMER_MANAGE')"><i class="bi bi-person-plus"></i> <span th:text="#{pos.customer.save}">Save as customer</span></button>
+          </div>
+        </div>
+
+        <div class="bill-head"><span th:text="#{pos.col.product}">Product</span><span class="text-center" th:text="#{pos.col.qty}">Qty</span><span class="text-end" th:text="#{pos.col.amount}">Amount</span><span></span></div>
+        <div class="lines" id="lines"></div>
+
+        <div class="p-3 border-top">
+          <div class="row g-2 mb-2">
+            <div class="col-6"><label class="form-label small mb-0" for="invDisc" th:text="#{pos.discount.bill}">Bill discount (₹)</label>
+              <input id="invDisc" class="form-control form-control-sm text-end" inputmode="decimal" value="0"></div>
+            <div class="col-6 d-flex align-items-end gap-1 quick-amt">
+              <button type="button" class="btn btn-outline-secondary btn-sm" data-pct="5">5%</button>
+              <button type="button" class="btn btn-outline-secondary btn-sm" data-pct="10">10%</button>
+            </div>
+          </div>
+          <dl class="row mb-1 small">
+            <dt class="col-7 fw-normal text-muted" th:text="#{pos.subtotal}">Subtotal</dt><dd class="col-5 text-end money mb-0" id="tSub">₹0.00</dd>
+            <dt class="col-7 fw-normal text-muted" th:text="#{pos.discount}">Discount</dt><dd class="col-5 text-end money mb-0" id="tDisc">₹0.00</dd>
+            <dt class="col-7 fw-normal text-muted" th:if="${taxEnabled}" th:text="#{pos.tax}">GST included</dt><dd class="col-5 text-end money mb-0" th:if="${taxEnabled}" id="tTax">₹0.00</dd>
+            <dt class="col-7 fw-normal text-muted" th:if="${exchange != null}" th:text="#{pos.exchange.credit} + ' (' + ${exchange.returnNo()} + ')'">Exchange credit</dt><dd class="col-5 text-end money mb-0 text-success" th:if="${exchange != null}" id="tExch">₹0.00</dd>
+            <dt class="col-7 fw-normal text-muted" th:if="${roundOff}" th:text="#{pos.roundoff}">Round off</dt><dd class="col-5 text-end money mb-0" th:if="${roundOff}" id="tRound">₹0.00</dd>
+          </dl>
+          <div class="total-band d-flex justify-content-between align-items-center">
+            <span class="fw-semibold" th:text="#{pos.total}">Total</span>
+            <span class="cart-total money" id="tTotal">₹0.00</span>
+          </div>
+        </div>
+
+        <div class="p-3 border-top">
+          <div class="d-flex justify-content-between mb-2"><span class="fw-semibold" th:text="#{pos.pay.method}">Payment Method</span>
+            <button class="btn btn-link btn-sm p-0" type="button" id="addPay"><i class="bi bi-plus-circle"></i> <span th:text="#{pos.split}">Split</span></button></div>
+          <div class="pay-methods mb-2" id="payMethods"></div>
+          <div id="payRows"></div>
+          <div class="d-flex justify-content-between small mt-1"><span class="text-muted" id="payStatusLabel"></span><strong class="money" id="payStatus"></strong></div>
+          <div class="mt-2" id="cashHelper">
+            <div class="input-group input-group-sm">
+              <span class="input-group-text" th:text="#{pos.cash.received}">Cash received</span>
+              <input id="cashIn" class="form-control text-end" inputmode="decimal" placeholder="0">
+              <span class="input-group-text">=&nbsp;<span id="changeOut" class="money">₹0.00</span></span>
+            </div>
+          </div>
+        </div>
+
+        <div class="px-3 pb-3" sec:authorize="hasAuthority('WHATSAPP_SEND')">
+          <div class="wa-consent">
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" id="waConsent" checked>
+              <label class="form-check-label" for="waConsent"><i class="bi bi-whatsapp wa-ico"></i> <span th:text="#{pos.wa.consent}">Customer agrees to receive this bill on WhatsApp</span></label>
+            </div>
+            <div class="small text-muted mt-1" th:text="${waAuto} ? #{pos.wa.auto} : #{pos.wa.manual}">WhatsApp note</div>
+          </div>
+        </div>
+
+        <div class="p-3 pt-0">
+          <textarea id="notes" class="form-control form-control-sm mb-2" rows="1" th:placeholder="#{pos.notes}"></textarea>
+          <div class="d-flex gap-2 mb-2">
+            <button class="btn btn-warning flex-fill text-white" type="button" id="holdBtn"><i class="bi bi-save me-1"></i><span th:text="#{pos.save.draft}">Save Draft</span></button>
+            <button class="btn btn-secondary flex-fill" type="button" id="clearBtn2"><i class="bi bi-x-circle me-1"></i><span th:text="#{pos.clear}">Clear</span></button>
+          </div>
+          <button class="btn btn-success btn-lg w-100" type="button" id="payBtn" disabled>
+            <i class="bi bi-printer me-1"></i><span th:text="#{pos.complete.print}">Complete Sale &amp; Print Bill</span> <small class="opacity-75">F9</small>
+          </button>
+          <div class="text-danger small mt-2 d-none" id="posError" role="alert"></div>
+        </div>
+      </div>
+    </aside>
+  </div>
+
+  <!-- payment method catalogue for JS -->
+  <ul id="methodData" hidden>
+    <li th:each="m : ${methods}" th:data-code="${m.code()}" th:data-name="${m.name()}" th:data-ref="${m.requiresReference()}"></li>
+  </ul>
+
+  <!-- success dialog -->
+  <div class="modal fade" id="doneModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered"><div class="modal-content">
+      <div class="modal-body text-center p-4">
+        <div class="display-4 text-success"><i class="bi bi-check-circle-fill"></i></div>
+        <h2 class="h4 mt-2" th:text="#{pos.done.title}">Sale completed</h2>
+        <div class="fs-5 fw-semibold" id="doneNo">INV</div>
+        <div class="money fs-3 fw-bold" id="doneTotal">₹0</div>
+        <div class="text-warning fw-semibold d-none" id="doneDue"></div>
+        <div class="alert alert-success py-2 small mt-3 d-none" id="doneWaAuto"><i class="bi bi-whatsapp"></i> <span th:text="#{pos.done.wa.auto}">The bill is being sent to the customer on WhatsApp.</span></div>
+        <div class="alert alert-warning py-2 small mt-3 d-none" id="doneWaFail"></div>
+        <div class="d-grid gap-2 mt-3">
+          <a class="btn btn-success d-none" id="doneWa" target="_blank" rel="noopener"><i class="bi bi-whatsapp me-1"></i><span th:text="#{pos.done.wa.share}">Send on WhatsApp</span></a>
+          <div class="btn-group">
+            <a class="btn btn-outline-primary" id="donePrint" target="_blank" rel="noopener"><i class="bi bi-printer me-1"></i><span th:text="#{pos.done.print}">Print A4</span></a>
+            <a class="btn btn-outline-primary" id="doneThermal" target="_blank" rel="noopener"><i class="bi bi-receipt me-1"></i><span th:text="#{pos.done.thermal}">Receipt</span></a>
+            <a class="btn btn-outline-primary" id="doneView"><i class="bi bi-eye me-1"></i><span th:text="#{pos.done.view}">View</span></a>
+          </div>
+          <button class="btn btn-primary" type="button" id="doneNew"><i class="bi bi-plus-lg me-1"></i><span th:text="#{pos.done.new}">New bill</span></button>
+        </div>
+      </div>
+    </div></div>
+  </div>
+</div>
+</th:block>
+<th:block layout:fragment="scripts"><script th:src="@{/js/pos.js}"></script></th:block>
+</body>
+</html>

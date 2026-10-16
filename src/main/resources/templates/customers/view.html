@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout}">
+<head><title th:text="${c.name}">Customer</title></head>
+<body>
+<th:block layout:fragment="content">
+  <div class="page-head"><div><h1 th:text="${c.name}">Name</h1><div class="sub"><span th:text="${c.customerCode}">C</span> · <span th:text="${c.phone}"></span> <span th:text="${c.address}"></span></div></div>
+    <div class="d-flex gap-2"><a class="btn btn-outline-secondary" th:href="@{/customers/{id}/edit(id=${c.id})}" sec:authorize="hasAuthority('CUSTOMER_MANAGE')"><i class="bi bi-pencil me-1"></i><span th:text="#{common.edit}">Edit</span></a></div></div>
+  <div class="row g-3 mb-3">
+    <div class="col-6 col-lg-3"><div class="card kpi"><div class="label" th:text="#{customers.lifetime}">Total spent</div><div class="value money" th:text="${@fmt.money(summary.lifetimeValue())}">0</div></div></div>
+    <div class="col-6 col-lg-3"><div class="card kpi"><div class="label" th:text="#{customers.bills}">Bills</div><div class="value" th:text="${summary.invoices()}">0</div></div></div>
+    <div class="col-6 col-lg-3"><div class="card kpi"><div class="label" th:text="#{col.due}">Due</div><div class="value money" th:classappend="${summary.outstanding().signum() > 0} ? 'text-danger'" th:text="${@fmt.money(summary.outstanding())}">0</div></div></div>
+    <div class="col-6 col-lg-3"><div class="card kpi"><div class="label" th:text="#{customers.last}">Last visit</div><div class="value fs-5" th:text="${@fmt.date(summary.lastPurchase())}">–</div></div></div>
+  </div>
+  <div class="card"><div class="card-header" th:text="#{nav.sales}">Invoices</div><div class="table-responsive"><table class="table table-hover mb-0">
+    <thead><tr><th th:text="#{col.invoice}">Invoice</th><th th:text="#{col.time}">Time</th><th class="text-end" th:text="#{col.total}">Total</th><th class="text-end" th:text="#{col.due}">Due</th><th th:text="#{col.status}">Status</th></tr></thead>
+    <tbody>
+      <tr th:each="r : ${invoices}"><td><a th:href="@{/sales/{id}(id=${r.id()})}" th:text="${r.invoiceNo()}">INV</a></td><td th:text="${@fmt.dateTime(r.saleTime())}">t</td>
+        <td class="text-end money" th:text="${@fmt.money(r.total())}">0</td><td class="text-end money" th:text="${r.balance().signum() > 0} ? ${@fmt.money(r.balance())} : '–'">–</td>
+        <td><span th:replace="~{fragments/ui :: salePill(${r.status()}, ${r.balance()})}"></span></td></tr>
+      <tr th:if="${#lists.isEmpty(invoices)}"><td colspan="5"><div th:replace="~{fragments/ui :: empty('receipt', 'sales.empty')}"></div></td></tr>
+    </tbody></table></div></div>
+</th:block>
+</body>
+</html>

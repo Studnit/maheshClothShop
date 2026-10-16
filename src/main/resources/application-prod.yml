@@ -1,0 +1,16 @@
+# Production profile: no demo data, secure cookies, Swagger off unless explicitly enabled.
+spring:
+  flyway:
+    locations: classpath:db/migration
+  thymeleaf:
+    cache: true
+server:
+  servlet:
+    session:
+      cookie:
+        secure: ${COOKIE_SECURE:true}
+springdoc:
+  api-docs:
+    enabled: ${SWAGGER_ENABLED:false}
+  swagger-ui:
+    enabled: ${SWAGGER_ENABLED:false}

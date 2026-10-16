@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout}">
+<head><title th:text="${s.name}">Supplier</title></head>
+<body>
+<th:block layout:fragment="content">
+  <div class="page-head">
+    <div><h1 th:text="${s.name}">Name</h1><div class="sub"><span th:text="${s.supplierCode}">S0001</span> · <span th:text="${s.phone}"></span> <span th:if="${s.gstin != null}" th:text="'· GSTIN ' + ${s.gstin}"></span></div></div>
+    <div class="d-flex gap-2">
+      <a class="btn btn-primary" th:href="@{/purchases/new(supplier=${s.id})}" sec:authorize="hasAuthority('PURCHASE_MANAGE')"><i class="bi bi-truck me-1"></i><span th:text="#{dash.new.purchase}">New purchase</span></a>
+      <a class="btn btn-outline-secondary" th:href="@{/suppliers/{id}/edit(id=${s.id})}" sec:authorize="hasAuthority('SUPPLIER_MANAGE')"><i class="bi bi-pencil me-1"></i><span th:text="#{common.edit}">Edit</span></a>
+    </div>
+  </div>
+  <div class="row g-3">
+    <div class="col-lg-4">
+      <div class="card kpi mb-3"><div class="label" th:text="#{suppliers.balance}">You owe</div><div class="value money" th:classappend="${summary.balance().signum() > 0} ? 'text-danger'" th:text="${@fmt.money(summary.balance())}">0</div>
+        <div class="small text-muted"><span th:text="${summary.purchases()}">0</span> <span th:text="#{suppliers.purchases}">purchases</span></div></div>
+      <div class="card" sec:authorize="hasAuthority('SUPPLIER_PAY')"><div class="card-header" th:text="#{supplier.pay}">Record a payment</div>
+        <form class="card-body" th:action="@{/suppliers/{id}/pay(id=${s.id})}" method="post" data-once>
+          <div class="mb-2"><input class="form-control text-end" name="amount" inputmode="decimal" required th:placeholder="#{col.amount}"></div>
+          <div class="row g-2 mb-2"><div class="col-6"><select class="form-select" name="method"><option th:each="m : ${methods}" th:value="${m.code()}" th:text="${m.name()}">Cash</option></select></div>
+            <div class="col-6"><input class="form-control" type="date" name="paidOn" th:value="${today}"></div></div>
+          <div class="mb-2"><input class="form-control" name="reference" th:placeholder="#{pos.reference}"></div>
+          <button class="btn btn-primary w-100" type="submit" th:text="#{common.save}">Save</button></form></div>
+    </div>
+    <div class="col-lg-8"><div class="card"><div class="card-header" th:text="#{supplier.statement}">Statement</div>
+      <div class="table-responsive"><table class="table mb-0">
+        <thead><tr><th th:text="#{col.date}">Date</th><th th:text="#{col.type}">Type</th><th th:text="#{col.reference}">Ref</th><th class="text-end" th:text="#{col.amount}">Amount</th><th class="text-end" th:text="#{col.balance}">Balance</th></tr></thead>
+        <tbody>
+          <tr th:each="l : ${ledger}"><td th:text="${@fmt.date(l.date())}">d</td><td><span class="status-pill" th:classappend="${l.type() == 'PURCHASE' || l.type() == 'OPENING'} ? 'pill-warn' : 'pill-ok'" th:text="#{'ledger.' + ${l.type()}}">t</span></td>
+            <td th:text="${l.ref()}">r</td><td class="text-end money" th:text="${@fmt.money(l.amount())}">0</td><td class="text-end money fw-semibold" th:text="${@fmt.money(l.running())}">0</td></tr>
+        </tbody></table></div></div></div>
+  </div>
+</th:block>
+</body>
+</html>

@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout}">
+<head><title th:text="#{nav.audit}">Audit log</title></head>
+<body>
+<th:block layout:fragment="content">
+  <div class="page-head"><div><h1 th:text="#{nav.audit}">Audit log</h1><div class="sub" th:text="#{admin.audit.sub}">Who did what, and when. Entries cannot be edited.</div></div></div>
+  <div class="card"><div class="card-body border-bottom"><form class="filters" method="get" th:action="@{/admin/audit}">
+    <div><label class="form-label" th:text="#{admin.user.username}">User</label><input class="form-control" name="user" th:value="${fUser}"></div>
+    <div><label class="form-label" th:text="#{admin.audit.action}">Action</label><select class="form-select" name="action"><option value="" th:text="#{filter.all}">All</option><option th:each="a : ${actions}" th:value="${a}" th:text="${a}" th:selected="${a == fAction}">a</option></select></div>
+    <div><button class="btn btn-primary" type="submit"><i class="bi bi-search"></i></button></div></form></div>
+  <div class="table-responsive"><table class="table table-sm table-hover mb-0">
+    <thead><tr><th th:text="#{col.time}">Time</th><th th:text="#{admin.user.username}">User</th><th th:text="#{admin.audit.action}">Action</th><th th:text="#{admin.audit.entity}">Entity</th><th th:text="#{col.details}">Details</th><th>IP</th></tr></thead>
+    <tbody><tr th:each="a : ${page.items()}"><td class="text-nowrap" th:text="${@fmt.dateTime(a.occurredAt())}">t</td><td th:text="${a.username()}">u</td><td><code th:text="${a.action()}">A</code></td>
+      <td th:text="${a.entityType()}">e</td><td class="small" th:text="${a.details()}">d</td><td class="small text-muted" th:text="${a.ip()}">ip</td></tr>
+      <tr th:if="${#lists.isEmpty(page.items())}"><td colspan="6"><div th:replace="~{fragments/ui :: empty('journal-text', 'admin.audit.empty')}"></div></td></tr></tbody></table></div>
+  <div th:replace="~{fragments/ui :: pager(${page})}"></div></div>
+</th:block>
+</body>
+</html>

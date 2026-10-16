@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en" th:lang="${lang}" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <title th:text="${inv.invoiceNo}">Invoice</title>
+  <link rel="stylesheet" th:href="@{/vendor/bootstrap/bootstrap.min.css}">
+  <link rel="stylesheet" th:href="@{/vendor/bootstrap-icons/bootstrap-icons.min.css}">
+  <link rel="stylesheet" th:href="@{/css/app.css}">
+</head>
+<body style="background:#eef0f6">
+<div class="container py-3">
+  <div class="no-print d-flex justify-content-between mb-3">
+    <a class="btn btn-outline-secondary" th:href="@{/sales/{id}(id=${inv.id})}"><i class="bi bi-arrow-left"></i> <span th:text="#{common.back}">Back</span></a>
+    <button class="btn btn-primary" type="button" id="printNow"><i class="bi bi-printer me-1"></i><span th:text="#{invoice.print}">Print</span></button>
+  </div>
+  <div class="invoice-sheet">
+    <div class="d-flex justify-content-between align-items-start">
+      <div class="d-flex gap-3 align-items-center">
+        <img th:if="${shop.hasLogo()}" th:src="@{/files/{id}(id=${shop.logoFileId()})}" alt="" style="height:56px;border-radius:8px">
+        <div>
+          <h2 th:text="${shop.name()}">Shop</h2>
+          <div th:if="${!#strings.isEmpty(shop.addressLine())}" th:text="${shop.addressLine()}"></div>
+          <div th:if="${!#strings.isEmpty(shop.phone())}" th:text="#{invoice.phone} + ': ' + ${shop.phone()}"></div>
+          <div th:if="${shop.taxEnabled() and !#strings.isEmpty(shop.gstin())}">GSTIN: <span th:text="${shop.gstin()}"></span></div>
+        </div>
+      </div>
+      <div class="r">
+        <div class="fw-bold fs-5" th:text="${shop.taxEnabled()} ? #{invoice.tax.invoice} : #{invoice.invoice}">INVOICE</div>
+        <div th:text="${inv.invoiceNo}">INV</div>
+        <div th:text="${@fmt.dateTime(inv.saleTime)}">date</div>
+        <div class="fw-bold text-danger" th:if="${inv.status.name() == 'CANCELLED'}" th:text="#{sale.status.cancelled}">CANCELLED</div>
+      </div>
+    </div>
+    <hr>
+    <div class="mb-2"><strong th:text="#{col.customer} + ':'">Customer:</strong>
+      <span th:text="${inv.customerName != null ? inv.customerName : #messages.msg('customer.walkin')}">Walk-in</span>
+      <span th:if="${inv.customerPhone != null}" th:text="' · ' + ${inv.customerPhone}"></span></div>
+    <table>
+      <thead><tr><th>#</th><th th:text="#{col.product}">Item</th><th th:if="${shop.taxEnabled()}">HSN</th><th class="r" th:text="#{col.qty}">Qty</th><th class="r" th:text="#{col.rate}">Rate</th>
+        <th class="r" th:text="#{col.discount}">Disc.</th><th class="r" th:if="${shop.taxEnabled()}">GST%</th><th class="r" th:text="#{col.amount}">Amount</th></tr></thead>
+      <tbody>
+        <tr th:each="l, i : ${lines}">
+          <td th:text="${i.count}">1</td>
+          <td><span th:text="${l.productName()}">p</span><small class="d-block text-muted" th:text="${(l.colourName() != null ? l.colourName() : '') + (l.sizeName() != null ? ' / ' + l.sizeName() : '')}"></small></td>
+          <td th:if="${shop.taxEnabled()}" th:text="${l.hsnCode()}"></td>
+          <td class="r" th:text="${l.quantity()}">1</td>
+          <td class="r" th:text="${@fmt.amount(l.unitPrice())}">0</td>
+          <td class="r" th:text="${@fmt.amount(l.lineDiscount().add(l.invoiceDiscountShare()))}">0</td>
+          <td class="r" th:if="${shop.taxEnabled()}" th:text="${@fmt.percent(l.taxRate())}">0</td>
+          <td class="r" th:text="${@fmt.amount(l.lineTotal())}">0</td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="d-flex justify-content-end mt-3">
+      <table style="width:300px">
+        <tr><td th:text="#{pos.subtotal}">Subtotal</td><td class="r" th:text="${@fmt.money(inv.subtotal)}">0</td></tr>
+        <tr th:if="${inv.lineDiscountTotal.add(inv.invoiceDiscount).signum() > 0}"><td th:text="#{pos.discount}">Discount</td><td class="r" th:text="'-' + ${@fmt.money(inv.lineDiscountTotal.add(inv.invoiceDiscount))}">0</td></tr>
+        <tr th:if="${shop.taxEnabled()}"><td th:text="#{invoice.taxable}">Taxable</td><td class="r" th:text="${@fmt.money(inv.taxableTotal)}">0</td></tr>
+        <tr th:if="${shop.taxEnabled()}"><td>CGST + SGST</td><td class="r" th:text="${@fmt.money(inv.taxTotal)}">0</td></tr>
+        <tr th:if="${inv.roundOff.signum() != 0}"><td th:text="#{pos.roundoff}">Round off</td><td class="r" th:text="${@fmt.money(inv.roundOff)}">0</td></tr>
+        <tr><td class="fw-bold fs-6" th:text="#{pos.total}">Total</td><td class="r fw-bold fs-6" th:text="${@fmt.money(inv.total)}">0</td></tr>
+        <tr><td th:text="#{sale.paid}">Paid</td><td class="r" th:text="${@fmt.money(inv.amountPaid)}">0</td></tr>
+        <tr th:if="${inv.balanceDue.signum() > 0}"><td class="fw-bold" th:text="#{col.due}">Balance due</td><td class="r fw-bold" th:text="${@fmt.money(inv.balanceDue)}">0</td></tr>
+      </table>
+    </div>
+    <div class="small mt-3" th:if="${!#lists.isEmpty(payments)}"><strong th:text="#{sale.payments} + ':'">Payments:</strong>
+      <span th:each="p, s : ${payments}" th:text="${p.methodName()} + ' ' + ${@fmt.money(p.amount())} + (${s.last} ? '' : ', ')"></span></div>
+    <hr>
+    <div class="text-center" th:text="${shop.footer()}">Thank you</div>
+    <div class="text-center small text-muted" th:if="${!#strings.isEmpty(shop.returnPolicy())}" th:text="${shop.returnPolicy()}"></div>
+  </div>
+</div>
+<script th:src="@{/js/print.js}"></script>
+</body></html>

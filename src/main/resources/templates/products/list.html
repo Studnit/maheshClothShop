@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout}">
+<head><title th:text="#{nav.products}">Products</title></head>
+<body>
+<th:block layout:fragment="content">
+  <div class="page-head">
+    <div><h1 th:text="#{nav.products}">Products</h1><div class="sub" th:text="#{products.sub}">Items with size and colour variants</div></div>
+    <a class="btn btn-primary" th:href="@{/products/new}" sec:authorize="hasAuthority('PRODUCT_MANAGE')"><i class="bi bi-plus-lg me-1"></i><span th:text="#{products.new}">Add product</span></a>
+  </div>
+  <div class="card mb-3"><div class="card-body">
+    <form class="filters" method="get" th:action="@{/products}">
+      <div><label class="form-label" th:text="#{filter.search}">Search</label><input class="form-control" name="q" th:value="${q}" th:placeholder="#{products.search.ph}"></div>
+      <div><label class="form-label" th:text="#{col.category}">Category</label>
+        <select class="form-select" name="category" data-autosubmit><option value="" th:text="#{filter.all}">All</option>
+          <option th:each="c : ${categories}" th:value="${c.id}" th:selected="${c.id == category}" th:text="${c.name}">c</option></select></div>
+      <div><label class="form-label" th:text="#{col.brand}">Brand</label>
+        <select class="form-select" name="brand" data-autosubmit><option value="" th:text="#{filter.all}">All</option>
+          <option th:each="b : ${brands}" th:value="${b.id}" th:selected="${b.id == brand}" th:text="${b.name}">b</option></select></div>
+      <div><label class="form-label" th:text="#{col.status}">Status</label>
+        <select class="form-select" name="status" data-autosubmit>
+          <option value="active" th:selected="${status == 'active'}" th:text="#{status.active}">Active</option>
+          <option value="inactive" th:selected="${status == 'inactive'}" th:text="#{status.inactive}">Inactive</option>
+          <option value="all" th:selected="${status == 'all'}" th:text="#{filter.all}">All</option></select></div>
+      <div><button class="btn btn-primary" type="submit"><i class="bi bi-search"></i></button></div>
+    </form>
+  </div></div>
+
+  <div class="row g-3">
+    <div class="col-sm-6 col-lg-4 col-xxl-3" th:each="p : ${page.items()}">
+      <a class="card h-100 text-reset" th:href="@{/products/{id}(id=${p.id()})}">
+        <div class="thumb" style="height:150px;border-radius:14px 14px 0 0;background:var(--brand-50);display:grid;place-items:center;overflow:hidden;font-size:40px;color:var(--brand)">
+          <img th:if="${p.imageFileId() != null}" loading="lazy" alt="" th:src="@{/files/{id}(id=${p.imageFileId()})}" style="width:100%;height:100%;object-fit:cover">
+          <i th:unless="${p.imageFileId() != null}" class="bi bi-handbag"></i>
+        </div>
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-start gap-2">
+            <div class="fw-semibold" th:text="${p.name()}">Name</div>
+            <span class="status-pill pill-mute" th:unless="${p.active()}" th:text="#{status.inactive}">Inactive</span>
+          </div>
+          <div class="small text-muted" th:text="${p.categoryName()} + (${p.brandName()} != null ? ' · ' + ${p.brandName()} : '')">cat</div>
+          <div class="d-flex justify-content-between align-items-end mt-2">
+            <div class="fw-bold money" th:text="${@fmt.money(p.sellingPrice())}">₹0</div>
+            <div class="text-end small">
+              <span class="status-pill" th:classappend="${p.available() == 0} ? 'pill-bad' : 'pill-ok'" th:text="${p.available()} + ' ' + #{dash.units}">0</span>
+              <div class="text-muted" th:text="${p.variantCount()} + ' ' + #{dash.variants}">0</div>
+            </div>
+          </div>
+        </div>
+      </a>
+    </div>
+    <div class="col-12" th:if="${#lists.isEmpty(page.items())}"><div class="card"><div th:replace="~{fragments/ui :: empty('tags', 'products.empty')}"></div></div></div>
+  </div>
+  <div class="card mt-3" th:if="${page.totalPages() > 1}"><div th:replace="~{fragments/ui :: pager(${page})}"></div></div>
+</th:block>
+</body>
+</html>

@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout}">
+<head><title th:text="${r.returnNo()}">Return</title></head>
+<body>
+<th:block layout:fragment="content">
+  <div class="page-head"><div><h1 th:text="${r.returnNo()}">R</h1>
+    <div class="sub"><span th:text="${@fmt.dateTime(r.time())}">d</span> · <a th:href="@{/sales/{id}(id=${r.invoiceId()})}" th:text="${r.invoiceNo()}">I</a> · <span th:text="#{'return.type.' + ${r.type()}}">t</span></div></div>
+    <a class="btn btn-outline-secondary" th:href="@{/returns}"><i class="bi bi-arrow-left me-1"></i><span th:text="#{nav.returns}">Returns</span></a></div>
+  <div class="row g-3">
+    <div class="col-lg-8"><div class="card"><div class="table-responsive"><table class="table mb-0">
+      <thead><tr><th th:text="#{col.item}">Item</th><th class="text-end" th:text="#{col.qty}">Qty</th><th th:text="#{return.condition}">Condition</th><th class="text-end" th:text="#{col.amount}">Amount</th></tr></thead>
+      <tbody><tr th:each="i : ${items}"><td><div class="fw-semibold" th:text="${i.productName()}">p</div><small class="text-muted" th:text="${@fmt.variant(i.colourName(), i.sizeName())} + ' · ' + ${i.sku()}">v</small></td>
+        <td class="text-end num" th:text="${i.quantity()}">1</td><td th:text="#{'return.cond.' + ${i.condition()}}">c</td><td class="text-end money" th:text="${@fmt.money(i.amount())}">0</td></tr></tbody></table></div>
+      <div class="card-body border-top" th:if="${r.reason()}"><span class="text-muted" th:text="#{return.reason}">Reason</span>: <span th:text="${r.reason()}">r</span></div></div></div>
+    <div class="col-lg-4"><div class="card"><div class="card-body"><dl class="row mb-0">
+      <dt class="col-7" th:text="#{col.total}">Total</dt><dd class="col-5 text-end money fw-bold" th:text="${@fmt.money(r.total())}">0</dd>
+      <dt class="col-7 fw-normal text-muted" th:text="#{return.balance.adjusted}">Reduced from due</dt><dd class="col-5 text-end money" th:text="${@fmt.money(r.balanceAdjusted())}">0</dd>
+      <dt class="col-7 fw-normal text-muted" th:text="#{return.refunded}">Refunded</dt><dd class="col-5 text-end money" th:text="${@fmt.money(r.refunded())}">0</dd>
+      <dt class="col-7 fw-normal text-muted" th:if="${r.credit().signum() > 0}" th:text="#{return.credit}">Credit</dt><dd class="col-5 text-end money" th:if="${r.credit().signum() > 0}" th:text="${@fmt.money(r.credit())}">0</dd>
+      <dt class="col-7 fw-normal text-muted" th:if="${r.credit().signum() > 0}" th:text="#{return.credit.left}">Credit left</dt><dd class="col-5 text-end money" th:if="${r.credit().signum() > 0}" th:text="${@fmt.money(r.creditLeft())}">0</dd>
+    </dl></div></div>
+    <div class="card mt-3" th:if="${r.creditStatus() == 'PENDING' and r.creditLeft().signum() > 0}"><div class="card-body">
+      <a class="btn btn-primary w-100 mb-3" th:href="@{/pos(exchange=${r.id()})}"><i class="bi bi-bag-plus me-1"></i><span th:text="#{return.credit.use}">Use credit in a new bill</span></a>
+      <h2 class="h6" th:text="#{return.credit.refund.title}">Refund the remaining credit</h2>
+      <form method="post" th:action="@{/returns/{id}/refund-credit(id=${r.id()})}" class="vstack gap-2">
+        <select class="form-select" name="method"><option th:each="m : ${methods}" th:value="${m.code()}" th:text="${m.name()}">Cash</option></select>
+        <input class="form-control" name="reference" th:placeholder="#{col.reference}">
+        <button class="btn btn-outline-primary" type="submit" th:text="#{return.credit.refund}">Refund credit</button></form></div></div>
+    </div>
+  </div>
+</th:block>
+</body>
+</html>

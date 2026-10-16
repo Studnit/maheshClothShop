@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout}">
+<head><title th:text="#{nav.settings}">Settings</title></head>
+<body>
+<th:block layout:fragment="content">
+  <div class="page-head"><div><h1 th:text="#{nav.settings}">Settings</h1><div class="sub" th:text="#{settings.sub}">Shop details, billing, WhatsApp and more</div></div></div>
+  <form method="post" th:action="@{/settings}" enctype="multipart/form-data">
+    <ul class="nav nav-tabs mb-3" role="tablist">
+      <li class="nav-item"><button class="nav-link active" type="button" data-bs-toggle="tab" data-bs-target="#t-shop" th:text="#{settings.shop}">Shop</button></li>
+      <li class="nav-item"><button class="nav-link" type="button" data-bs-toggle="tab" data-bs-target="#t-billing" th:text="#{settings.billing}">Billing</button></li>
+      <li class="nav-item"><button class="nav-link" type="button" data-bs-toggle="tab" data-bs-target="#t-wa"><i class="bi bi-whatsapp me-1"></i><span th:text="#{settings.whatsapp}">WhatsApp</span></button></li>
+      <li class="nav-item"><button class="nav-link" type="button" data-bs-toggle="tab" data-bs-target="#t-system" th:text="#{settings.system}">System</button></li>
+    </ul>
+    <div class="card"><div class="card-body"><div class="tab-content">
+
+      <div class="tab-pane fade show active" id="t-shop"><div class="row g-3">
+        <div class="col-md-6"><label class="form-label" th:text="#{settings.shop.name}">Shop name</label><input class="form-control" name="shop.name" required th:value="${s['shop.name']}"></div>
+        <div class="col-md-6"><label class="form-label" th:text="#{col.phone}">Phone</label><input class="form-control" name="shop.phone" th:value="${s['shop.phone']}"></div>
+        <div class="col-12"><label class="form-label" th:text="#{settings.shop.address}">Address</label><input class="form-control" name="shop.address" th:value="${s['shop.address']}"><div class="form-text" th:text="#{settings.shop.address.help}">Shown on bills. Enter your real address.</div></div>
+        <div class="col-md-3"><label class="form-label" th:text="#{settings.shop.village}">Village / town</label><input class="form-control" name="shop.village" th:value="${s['shop.village']}"></div>
+        <div class="col-md-3"><label class="form-label" th:text="#{settings.shop.district}">District</label><input class="form-control" name="shop.district" th:value="${s['shop.district']}"></div>
+        <div class="col-md-3"><label class="form-label" th:text="#{settings.shop.state}">State</label><input class="form-control" name="shop.state" th:value="${s['shop.state']}"></div>
+        <div class="col-md-3"><label class="form-label" th:text="#{settings.shop.pin}">PIN</label><input class="form-control" name="shop.pin" maxlength="6" th:value="${s['shop.pin']}"></div>
+        <div class="col-md-6"><label class="form-label" th:text="#{settings.shop.email}">Email</label><input class="form-control" type="email" name="shop.email" th:value="${s['shop.email']}"></div>
+        <div class="col-md-6"><label class="form-label">GSTIN</label><input class="form-control text-uppercase" name="shop.gstin" maxlength="15" th:value="${s['shop.gstin']}"><div class="form-text" th:text="#{settings.gstin.help}">Leave empty if you are not GST registered.</div></div>
+        <div class="col-md-6"><label class="form-label" th:text="#{settings.logo}">Logo</label><input class="form-control" type="file" name="logo" accept="image/png,image/jpeg">
+          <div class="form-check mt-1" th:if="${!#strings.isEmpty(s['shop.logo_file_id'])}"><input class="form-check-input" type="checkbox" name="removeLogo" value="true" id="rl"><label class="form-check-label" for="rl" th:text="#{settings.logo.remove}">Remove logo</label></div></div>
+      </div></div>
+
+      <div class="tab-pane fade" id="t-billing"><div class="row g-3">
+        <div class="col-md-4"><div class="form-check form-switch"><input class="form-check-input" type="checkbox" name="tax.enabled" value="true" id="tx" th:checked="${s['tax.enabled'] == 'true'}"><label class="form-check-label" for="tx" th:text="#{settings.tax.enabled}">Charge GST</label></div></div>
+        <div class="col-md-4"><div class="form-check form-switch"><input class="form-check-input" type="checkbox" name="tax.prices_include_tax" value="true" id="ti" th:checked="${s['tax.prices_include_tax'] == 'true'}"><label class="form-check-label" for="ti" th:text="#{settings.tax.inclusive}">Prices include tax</label></div></div>
+        <div class="col-md-4"><div class="form-check form-switch"><input class="form-check-input" type="checkbox" name="invoice.round_off" value="true" id="ro" th:checked="${s['invoice.round_off'] == 'true'}"><label class="form-check-label" for="ro" th:text="#{settings.roundoff}">Round off to whole rupee</label></div></div>
+        <div class="col-md-4"><label class="form-label" th:text="#{settings.tax.rate}">Default GST rate %</label><input class="form-control" name="tax.default_rate" th:value="${s['tax.default_rate']}"></div>
+        <div class="col-md-4"><label class="form-label" th:text="#{settings.invoice.prefix}">Invoice prefix</label><input class="form-control" name="invoice.prefix" th:value="${s['invoice.prefix']}"></div>
+        <div class="col-md-4"><label class="form-label" th:text="#{settings.invoice.format}">Invoice number format</label><input class="form-control" name="invoice.format" th:value="${s['invoice.format']}"><div class="form-text">{PREFIX} {FYS} {SEQ}</div></div>
+        <div class="col-md-4"><label class="form-label" th:text="#{settings.invoice.padding}">Number digits</label><input class="form-control" name="invoice.seq_padding" th:value="${s['invoice.seq_padding']}"></div>
+        <div class="col-md-4"><label class="form-label" th:text="#{settings.receipt.width}">Thermal paper width</label><select class="form-select" name="receipt.paper_width"><option value="58" th:selected="${s['receipt.paper_width'] == '58'}">58 mm</option><option value="80" th:selected="${s['receipt.paper_width'] != '58'}">80 mm</option></select></div>
+        <div class="col-md-4"><label class="form-label" th:text="#{settings.discount.max}">Cashier max discount %</label><input class="form-control" name="discount.cashier_max_percent" th:value="${s['discount.cashier_max_percent']}"></div>
+        <div class="col-md-4"><div class="form-check form-switch"><input class="form-check-input" type="checkbox" name="credit.enabled" value="true" id="cr" th:checked="${s['credit.enabled'] == 'true'}"><label class="form-check-label" for="cr" th:text="#{settings.credit.enabled}">Allow credit sales</label></div></div>
+        <div class="col-md-4"><div class="form-check form-switch"><input class="form-check-input" type="checkbox" name="purchase.tax_in_cost" value="true" id="pt" th:checked="${s['purchase.tax_in_cost'] == 'true'}"><label class="form-check-label" for="pt" th:text="#{settings.purchase.taxcost}">Purchase GST counts as cost</label></div></div>
+        <div class="col-md-4"><label class="form-label" th:text="#{settings.return.window}">Return window (days, empty = none)</label><input class="form-control" name="return.window_days" th:value="${s['return.window_days']}"></div>
+        <div class="col-12"><label class="form-label" th:text="#{settings.invoice.footer}">Bill footer message</label><input class="form-control" name="invoice.footer" th:value="${s['invoice.footer']}"></div>
+        <div class="col-12"><label class="form-label" th:text="#{settings.invoice.policy}">Return / exchange policy on bill</label><textarea class="form-control" rows="2" name="invoice.return_policy" th:text="${s['invoice.return_policy']}"></textarea></div>
+      </div></div>
+
+      <div class="tab-pane fade" id="t-wa"><div class="row g-3">
+        <div class="col-12"><div class="alert" th:classappend="${waApiConfigured} ? 'alert-success' : 'alert-warning'"><i class="bi bi-whatsapp me-1"></i>
+          <span th:text="${waApiConfigured} ? #{settings.wa.configured} : #{settings.wa.notconfigured}">status</span></div></div>
+        <div class="col-md-6"><div class="form-check form-switch"><input class="form-check-input" type="checkbox" name="whatsapp.enabled" value="true" id="we" th:checked="${s['whatsapp.enabled'] == 'true'}"><label class="form-check-label" for="we" th:text="#{settings.wa.enabled}">Send through WhatsApp Business API</label></div></div>
+        <div class="col-md-6"><div class="form-check form-switch"><input class="form-check-input" type="checkbox" name="whatsapp.auto_send" value="true" id="wa" th:checked="${s['whatsapp.auto_send'] == 'true'}"><label class="form-check-label" for="wa" th:text="#{settings.wa.auto}">Send automatically after each bill</label></div></div>
+        <div class="col-md-6"><label class="form-label">Phone number ID</label><input class="form-control" name="whatsapp.phone_number_id" th:value="${s['whatsapp.phone_number_id']}"></div>
+        <div class="col-md-6"><label class="form-label" th:text="#{settings.wa.template}">Template name</label><input class="form-control" name="whatsapp.template_name" th:value="${s['whatsapp.template_name']}"></div>
+        <div class="col-md-3"><label class="form-label" th:text="#{settings.wa.lang.en}">English template language</label><input class="form-control" name="whatsapp.template_lang_en" th:value="${s['whatsapp.template_lang_en']}"></div>
+        <div class="col-md-3"><label class="form-label" th:text="#{settings.wa.lang.mr}">Marathi template language</label><input class="form-control" name="whatsapp.template_lang_mr" th:value="${s['whatsapp.template_lang_mr']}"></div>
+        <div class="col-md-3"><label class="form-label" th:text="#{settings.wa.country}">Default country code</label><input class="form-control" name="whatsapp.default_country_code" th:value="${s['whatsapp.default_country_code']}"></div>
+        <div class="col-md-3"><label class="form-label" th:text="#{settings.wa.validity}">Download link valid (days)</label><input class="form-control" name="whatsapp.link_validity_days" th:value="${s['whatsapp.link_validity_days']}"></div>
+        <div class="col-12"><label class="form-label" th:text="#{settings.publicurl}">Public web address of this app</label><input class="form-control" name="app.public_base_url" placeholder="https://billing.example.in" th:value="${s['app.public_base_url']}"><div class="form-text" th:text="#{settings.publicurl.help}">Used in the PDF download link sent to customers.</div></div>
+        <div class="col-12 text-muted small" th:text="#{settings.wa.secrets}">The access token, app secret and webhook verify token are set as server environment variables, never here.</div>
+      </div></div>
+
+      <div class="tab-pane fade" id="t-system"><div class="row g-3">
+        <div class="col-md-4"><label class="form-label" th:text="#{settings.language}">Default language</label><select class="form-select" name="language.default"><option value="en" th:selected="${s['language.default'] != 'mr'}">English</option><option value="mr" th:selected="${s['language.default'] == 'mr'}">मराठी</option><option value="both" th:selected="${s['language.default'] == 'both'}">मराठी + English</option></select></div>
+        <div class="col-md-4"><label class="form-label" th:text="#{settings.stock.low}">Low-stock level</label><input class="form-control" name="stock.low_threshold" th:value="${s['stock.low_threshold']}"></div>
+        <div class="col-md-4"><div class="form-check form-switch mt-4"><input class="form-check-input" type="checkbox" name="backup.enabled" value="true" id="be" th:checked="${s['backup.enabled'] == 'true'}"><label class="form-check-label" for="be" th:text="#{settings.backup.enabled}">Nightly backup is set up</label></div></div>
+        <div class="col-md-4"><label class="form-label" th:text="#{settings.backup.retention}">Keep backups (days)</label><input class="form-control" name="backup.retention_days" th:value="${s['backup.retention_days']}"></div>
+        <div class="col-md-8"><label class="form-label" th:text="#{settings.backup.notes}">Backup notes</label><input class="form-control" name="backup.notes" th:value="${s['backup.notes']}"></div>
+      </div></div>
+
+    </div></div></div>
+    <div class="mt-3"><button class="btn btn-primary" type="submit"><i class="bi bi-check2 me-1"></i><span th:text="#{action.save}">Save</span></button></div>
+  </form>
+</th:block>
+</body>
+</html>

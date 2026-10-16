@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout}">
+<head><title th:text="#{nav.suppliers}">Suppliers</title></head>
+<body>
+<th:block layout:fragment="content">
+  <div class="page-head">
+    <div><h1 th:text="#{nav.suppliers}">Suppliers</h1><div class="sub"><span th:text="#{suppliers.payable}">You owe</span>: <strong class="money" th:text="${@fmt.money(payable)}">0</strong></div></div>
+    <a class="btn btn-primary" th:href="@{/suppliers/new}" sec:authorize="hasAuthority('SUPPLIER_MANAGE')"><i class="bi bi-plus-lg me-1"></i><span th:text="#{suppliers.new}">Add supplier</span></a>
+  </div>
+  <div class="card">
+    <div class="card-body border-bottom"><form class="filters" method="get" th:action="@{/suppliers}">
+      <div><input class="form-control" name="q" th:value="${q}" th:placeholder="#{filter.search}"></div>
+      <div class="form-check mb-2"><input class="form-check-input" type="checkbox" name="due" value="true" id="dueOnly" th:checked="${due}" data-autosubmit><label class="form-check-label" for="dueOnly" th:text="#{suppliers.only.due}">Only with balance</label></div>
+      <div><button class="btn btn-primary" type="submit"><i class="bi bi-search"></i></button></div></form></div>
+    <div class="table-responsive"><table class="table table-hover mb-0">
+      <thead><tr><th th:text="#{col.name}">Name</th><th th:text="#{col.phone}">Phone</th><th>GSTIN</th><th class="text-end" th:text="#{suppliers.purchases}">Purchases</th><th th:text="#{suppliers.last}">Last purchase</th><th class="text-end" th:text="#{suppliers.balance}">Balance</th></tr></thead>
+      <tbody>
+        <tr th:each="r : ${rows}" th:classappend="${!r.active()} ? 'opacity-50'">
+          <td><a class="fw-semibold" th:href="@{/suppliers/{id}(id=${r.id()})}" th:text="${r.name()}">n</a><small class="d-block text-muted" th:text="${r.code()}">S0001</small></td>
+          <td th:text="${r.phone()}">p</td><td class="small" th:text="${r.gstin()}">g</td>
+          <td class="text-end num" th:text="${r.purchases()}">0</td><td th:text="${@fmt.date(r.lastPurchase())}">d</td>
+          <td class="text-end money fw-semibold" th:classappend="${r.balance().signum() > 0} ? 'text-danger'" th:text="${@fmt.money(r.balance())}">0</td>
+        </tr>
+        <tr th:if="${#lists.isEmpty(rows)}"><td colspan="6"><div th:replace="~{fragments/ui :: empty('shop', 'suppliers.empty')}"></div></td></tr>
+      </tbody></table></div>
+  </div>
+</th:block>
+</body>
+</html>

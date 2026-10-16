@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout}">
+<head><title th:text="#{return.new}">New return</title></head>
+<body>
+<th:block layout:fragment="content">
+  <div class="page-head"><div><h1 th:text="#{return.new}">New return</h1></div></div>
+  <div class="card mb-3" th:unless="${inv}"><div class="card-body">
+    <form method="get" th:action="@{/returns/new}" class="row g-2 align-items-end">
+      <div class="col-md-6"><label class="form-label" th:text="#{return.find.invoice}">Invoice number</label>
+        <input class="form-control" name="no" th:value="${no}" autofocus placeholder="INV-..."></div>
+      <div class="col-auto"><button class="btn btn-primary" type="submit"><i class="bi bi-search me-1"></i><span th:text="#{filter.search}">Search</span></button></div>
+    </form></div></div>
+  <form th:if="${inv}" method="post" th:action="@{/returns}">
+    <input type="hidden" name="invoiceId" th:value="${inv.id}"><input type="hidden" name="requestId" th:value="${requestId}">
+    <div class="card mb-3"><div class="card-body d-flex flex-wrap gap-3 justify-content-between">
+      <div><div class="text-muted small" th:text="#{sale.invoice}">Invoice</div><a class="fw-bold" th:href="@{/sales/{id}(id=${inv.id})}" th:text="${inv.invoiceNo}">INV</a></div>
+      <div><div class="text-muted small" th:text="#{col.customer}">Customer</div><div th:text="${inv.customerName != null ? inv.customerName : #messages.msg('customer.walkin')}">c</div></div>
+      <div><div class="text-muted small" th:text="#{col.date}">Date</div><div th:text="${@fmt.dateTime(inv.saleTime)}">d</div></div>
+      <div><div class="text-muted small" th:text="#{col.total}">Total</div><div class="money fw-bold" th:text="${@fmt.money(inv.total)}">0</div></div>
+      <div><div class="text-muted small" th:text="#{col.due}">Due</div><div class="money" th:text="${@fmt.money(inv.balanceDue)}">0</div></div>
+      <div th:if="${windowDays != null and !windowDays.isBlank()}"><div class="text-muted small" th:text="#{return.window}">Return window</div><div th:text="${windowDays} + ' ' + #{unit.days}">7 days</div></div>
+    </div></div>
+    <div class="card mb-3"><div class="table-responsive"><table class="table mb-0 align-middle">
+      <thead><tr><th th:text="#{col.item}">Item</th><th class="text-end" th:text="#{col.qty}">Qty</th><th class="text-end" th:text="#{col.returned}">Returned</th><th class="text-end" th:text="#{col.total}">Total</th><th style="width:120px" th:text="#{return.qty}">Return qty</th><th style="width:170px" th:text="#{return.condition}">Condition</th></tr></thead>
+      <tbody><tr th:each="l : ${lines}">
+        <td><div class="fw-semibold" th:text="${l.productName()}">p</div><small class="text-muted" th:text="${@fmt.variant(l.colourName(), l.sizeName())} + ' · ' + ${l.sku()}">v</small></td>
+        <td class="text-end num" th:text="${l.quantity()}">1</td><td class="text-end num" th:text="${l.returnedQty()}">0</td>
+        <td class="text-end money" th:text="${@fmt.money(l.lineTotal())}">0</td>
+        <td><input type="number" min="0" th:max="${l.returnable()}" value="0" class="form-control" th:name="'q_' + ${l.id()}" th:disabled="${l.returnable() <= 0}"></td>
+        <td><select class="form-select" th:name="'cond_' + ${l.id()}" th:disabled="${l.returnable() <= 0}"><option value="RESELLABLE" th:text="#{return.cond.RESELLABLE}">Resellable</option><option value="DAMAGED" th:text="#{return.cond.DAMAGED}">Damaged</option></select></td>
+      </tr></tbody></table></div></div>
+    <div class="card mb-3"><div class="card-body row g-3">
+      <div class="col-md-4"><label class="form-label" th:text="#{return.type}">Return type</label>
+        <select class="form-select" name="type"><option value="RETURN" th:text="#{return.type.RETURN}">Return</option><option value="EXCHANGE" th:text="#{return.type.EXCHANGE}">Exchange</option></select>
+        <div class="form-text" th:text="#{return.type.help}">Exchange keeps the value as credit for a replacement sale.</div></div>
+      <div class="col-md-4"><label class="form-label" th:text="#{return.refund.method}">Refund method</label>
+        <select class="form-select" name="refundMethod"><option th:each="m : ${methods}" th:value="${m.code()}" th:text="${m.name()}">Cash</option></select></div>
+      <div class="col-md-4"><label class="form-label" th:text="#{col.reference}">Reference</label><input class="form-control" name="refundReference" maxlength="100"></div>
+      <div class="col-12"><label class="form-label" th:text="#{return.reason}">Reason</label><input class="form-control" name="reason" required maxlength="300"></div>
+    </div></div>
+    <div class="d-flex gap-2"><button class="btn btn-primary" type="submit"><i class="bi bi-check2-circle me-1"></i><span th:text="#{return.submit}">Process return</span></button>
+      <a class="btn btn-outline-secondary" th:href="@{/sales/{id}(id=${inv.id})}" th:text="#{action.cancel}">Cancel</a></div>
+  </form>
+</th:block>
+</body>
+</html>

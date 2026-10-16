@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout}">
+<head><title th:text="#{nav.whatsapp}">WhatsApp history</title></head>
+<body>
+<th:block layout:fragment="content">
+  <div class="page-head">
+    <div><h1><i class="bi bi-whatsapp wa-ico me-1"></i><span th:text="#{nav.whatsapp}">WhatsApp history</span></h1>
+      <div class="sub" th:text="#{wa.history.sub}">Every bill sent to customers from your WhatsApp Business account</div></div>
+    <a class="btn btn-outline-secondary" th:href="@{/settings#whatsapp}" sec:authorize="hasAuthority('SETTINGS_MANAGE')"><i class="bi bi-gear me-1"></i><span th:text="#{wa.settings}">WhatsApp settings</span></a>
+  </div>
+
+  <div class="alert alert-info" th:unless="${apiReady}">
+    <i class="bi bi-info-circle me-1"></i>
+    <span th:if="${!apiConfigured}" th:text="#{wa.notice.notconfigured}">WhatsApp Business is not connected yet.</span>
+    <span th:if="${apiConfigured and !enabledSetting}" th:text="#{wa.notice.disabled}">Automatic sending is switched off.</span>
+  </div>
+
+  <div class="row g-3 mb-3">
+    <div class="col-6 col-md-3" th:each="s : ${T(java.util.List).of('SENT','DELIVERED','READ','FAILED')}">
+      <a class="card kpi d-block text-reset" th:href="@{/whatsapp(status=${s})}">
+        <div class="label" th:text="#{'wa.status.' + ${s}}">Sent</div>
+        <div class="value" th:text="${counts.getOrDefault(s, 0L)}">0</div>
+      </a>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-body border-bottom">
+      <form class="filters" method="get" th:action="@{/whatsapp}">
+        <div><label class="form-label" th:text="#{filter.search}">Search</label><input class="form-control" name="q" th:value="${q}" th:placeholder="#{wa.search.ph}"></div>
+        <div><label class="form-label" th:text="#{col.status}">Status</label>
+          <select class="form-select" name="status" data-autosubmit>
+            <option value="" th:text="#{filter.all}">All</option>
+            <option th:each="s : ${T(java.util.List).of('QUEUED','SENT','DELIVERED','READ','FAILED','OPENED')}" th:value="${s}" th:selected="${status == s}" th:text="#{'wa.status.' + ${s}}">s</option>
+          </select></div>
+        <div><button class="btn btn-primary" type="submit"><i class="bi bi-search"></i></button></div>
+      </form>
+    </div>
+    <div class="table-responsive">
+      <table class="table table-hover mb-0">
+        <thead><tr><th th:text="#{col.time}">When</th><th th:text="#{col.invoice}">Invoice</th><th th:text="#{col.customer}">Customer</th><th th:text="#{col.phone}">Phone</th>
+          <th th:text="#{wa.col.how}">How</th><th th:text="#{col.status}">Status</th><th th:text="#{wa.col.by}">By</th><th></th></tr></thead>
+        <tbody>
+          <tr th:each="m : ${page.items()}">
+            <td th:text="${@fmt.dateTime(m.createdAt())}">time</td>
+            <td><a th:href="@{/sales/{id}(id=${m.invoiceId()})}" th:text="${m.invoiceNo()}">INV</a></td>
+            <td th:text="${m.customerName()}">name</td>
+            <td th:text="${m.phone()}">phone</td>
+            <td th:text="${m.mode() == 'API'} ? #{wa.mode.api} : #{wa.mode.link}">API</td>
+            <td><span th:replace="~{fragments/ui :: waPill(${m.status()})}"></span>
+              <div class="small text-danger" th:if="${m.error() != null}" th:text="${m.error()}"></div>
+              <div class="small text-muted" th:if="${m.readAt() != null}" th:text="#{wa.read.at(${@fmt.dateTime(m.readAt())})}">read</div></td>
+            <td th:text="${m.createdBy()}">user</td>
+            <td class="text-end">
+              <form th:if="${m.status() == 'FAILED' and apiReady}" th:action="@{/whatsapp/{id}/resend(id=${m.id()})}" method="post">
+                <button class="btn btn-sm btn-outline-primary" type="submit"><i class="bi bi-arrow-repeat"></i> <span th:text="#{wa.retry}">Retry</span></button></form>
+            </td>
+          </tr>
+          <tr th:if="${#lists.isEmpty(page.items())}"><td colspan="8"><div th:replace="~{fragments/ui :: empty('whatsapp', 'wa.empty')}"></div></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div th:replace="~{fragments/ui :: pager(${page})}"></div>
+  </div>
+</th:block>
+</body>
+</html>

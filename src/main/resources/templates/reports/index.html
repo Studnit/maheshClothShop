@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout}">
+<head><title th:text="#{nav.reports}">Reports</title></head>
+<body>
+<th:block layout:fragment="content">
+  <div class="page-head"><div><h1 th:text="#{nav.reports}">Reports</h1><div class="sub" th:text="#{report.sub}">Pick a report, choose dates, export to CSV</div></div>
+    <a class="btn btn-primary" th:if="${canFinancial}" th:href="@{/reports/profit-loss}"><i class="bi bi-graph-up-arrow me-1"></i><span th:text="#{report.profit-loss}">Profit &amp; loss</span></a></div>
+  <div class="mb-4" th:each="g : ${groups}">
+    <h2 class="h6 text-uppercase text-muted mb-2" th:text="#{'report.group.' + ${g.key}}">Group</h2>
+    <div class="row g-3"><div class="col-md-6 col-xl-4" th:each="d : ${g.value}">
+      <a class="card h-100 text-decoration-none report-tile" th:href="@{/reports/{k}(k=${d.key()})}"><div class="card-body">
+        <div class="fw-semibold" th:text="#{'report.' + ${d.key()}}">Report</div>
+        <small class="text-muted" th:text="#{'report.' + ${d.key()} + '.desc'}">Description</small></div></a></div></div>
+  </div>
+</th:block>
+</body>
+</html>

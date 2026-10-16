@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout}">
+<head><title th:text="#{nav.dashboard}">Dashboard</title></head>
+<body>
+<th:block layout:fragment="content">
+  <div class="page-head">
+    <div>
+      <h1 th:text="#{dash.title}">Business overview</h1>
+      <div class="sub"><span th:text="#{dash.subtitle}">Live numbers from your billing and stock</span></div>
+    </div>
+    <div class="d-flex gap-2 flex-wrap">
+      <a class="btn btn-primary" th:href="@{/pos}" sec:authorize="hasAuthority('SALE_CREATE')"><i class="bi bi-upc-scan me-1"></i><span th:text="#{nav.pos}">New Bill</span></a>
+      <a class="btn btn-outline-secondary" th:href="@{/purchases/new}" sec:authorize="hasAuthority('PURCHASE_MANAGE')"><i class="bi bi-truck me-1"></i><span th:text="#{dash.new.purchase}">New purchase</span></a>
+      <a class="btn btn-outline-secondary" th:href="@{/inventory/adjust}" sec:authorize="hasAuthority('STOCK_ADJUST')"><i class="bi bi-sliders me-1"></i><span th:text="#{dash.adjust.stock}">Adjust stock</span></a>
+    </div>
+  </div>
+
+  <div id="dash" th:data-json="${chartJson}">
+  <!-- KPI row -->
+  <div class="row g-3 mb-3">
+    <div class="col-6 col-xl-3">
+      <div class="card kpi">
+        <span class="ico ico-indigo"><i class="bi bi-currency-rupee"></i></span>
+        <div class="label" th:text="#{dash.sales.today}">Today's sales</div>
+        <div class="value money" th:text="${@fmt.money(d.today().sales())}">₹0.00</div>
+        <div class="delta" th:if="${d.todayChange() != null}" th:classappend="${d.todayChange().signum() >= 0} ? 'up' : 'down'">
+          <i class="bi" th:classappend="${d.todayChange().signum() >= 0} ? 'bi-arrow-up-right' : 'bi-arrow-down-right'"></i>
+          <span th:text="${d.todayChange().abs()} + '%'">0%</span> <span class="text-muted fw-normal" th:text="#{dash.vs.yesterday}">vs yesterday</span>
+        </div>
+        <div class="delta text-muted" th:unless="${d.todayChange() != null}" th:text="#{dash.no.compare}">–</div>
+        <div class="text-muted small mt-1"><span th:text="${d.today().bills()}">0</span> <span th:text="#{dash.bills}">bills</span> · <span th:text="${d.today().units()}">0</span> <span th:text="#{dash.units}">items</span></div>
+      </div>
+    </div>
+    <div class="col-6 col-xl-3">
+      <div class="card kpi">
+        <span class="ico ico-green"><i class="bi bi-graph-up-arrow"></i></span>
+        <div class="label" th:text="#{dash.sales.month}">This month</div>
+        <div class="value money" th:text="${@fmt.money(d.month().sales())}">₹0.00</div>
+        <div class="delta" th:if="${d.monthChange() != null}" th:classappend="${d.monthChange().signum() >= 0} ? 'up' : 'down'">
+          <i class="bi" th:classappend="${d.monthChange().signum() >= 0} ? 'bi-arrow-up-right' : 'bi-arrow-down-right'"></i>
+          <span th:text="${d.monthChange().abs()} + '%'">0%</span> <span class="text-muted fw-normal" th:text="#{dash.vs.lastmonth}">vs last month</span>
+        </div>
+        <div class="text-muted small mt-1" th:text="#{dash.avg.bill(${@fmt.money(d.month().average())})}">Avg bill</div>
+      </div>
+    </div>
+    <div class="col-6 col-xl-3" sec:authorize="hasAuthority('DASHBOARD_FINANCIAL')">
+      <div class="card kpi">
+        <span class="ico ico-amber"><i class="bi bi-piggy-bank"></i></span>
+        <div class="label" th:text="#{dash.profit.month}">Gross profit (month)</div>
+        <div class="value money" th:text="${@fmt.money(d.month().profit())}">₹0.00</div>
+        <div class="text-muted small mt-1"><span th:text="#{dash.net.profit}">After expenses</span>: <strong class="money" th:classappend="${d.netProfitMonth().signum() < 0} ? 'text-danger'" th:text="${@fmt.money(d.netProfitMonth())}">₹0</strong></div>
+      </div>
+    </div>
+    <div class="col-6 col-xl-3">
+      <div class="card kpi">
+        <span class="ico ico-sky"><i class="bi bi-boxes"></i></span>
+        <div class="label" th:text="#{dash.stock.value}">Stock value (at cost)</div>
+        <div class="value money" th:text="${@fmt.money(d.stock().value())}">₹0.00</div>
+        <div class="text-muted small mt-1"><span th:text="${@fmt.number(d.stock().units())}">0</span> <span th:text="#{dash.units}">items</span> · <span th:text="${d.stock().variants()}">0</span> <span th:text="#{dash.variants}">variants</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-3 mb-3">
+    <div class="col-6 col-xl-3" sec:authorize="hasAuthority('DASHBOARD_FINANCIAL')">
+      <div class="card kpi">
+        <span class="ico ico-rose"><i class="bi bi-person-exclamation"></i></span>
+        <div class="label" th:text="#{dash.receivable}">Customers owe you</div>
+        <div class="value money" th:text="${@fmt.money(d.receivable())}">₹0.00</div>
+        <a class="small" th:href="@{/customers(due=true)}" th:text="#{dash.view.dues}">View dues</a>
+      </div>
+    </div>
+    <div class="col-6 col-xl-3" sec:authorize="hasAuthority('DASHBOARD_FINANCIAL')">
+      <div class="card kpi">
+        <span class="ico ico-violet"><i class="bi bi-truck"></i></span>
+        <div class="label" th:text="#{dash.payable}">You owe suppliers</div>
+        <div class="value money" th:text="${@fmt.money(d.payable())}">₹0.00</div>
+        <a class="small" th:href="@{/suppliers(due=true)}" th:text="#{dash.view.suppliers}">View suppliers</a>
+      </div>
+    </div>
+    <div class="col-6 col-xl-3">
+      <div class="card kpi">
+        <span class="ico ico-amber"><i class="bi bi-exclamation-triangle"></i></span>
+        <div class="label" th:text="#{dash.stock.health}">Stock health</div>
+        <div class="value" th:text="${d.stock().healthyPercent()} + '%'">100%</div>
+        <div class="stock-bar mt-1">
+          <span class="bg-success" th:style="'width:' + ${d.stock().variants() == 0 ? 0 : d.stock().ok() * 100 / d.stock().variants()} + '%'"></span>
+          <span class="bg-warning" th:style="'width:' + ${d.stock().variants() == 0 ? 0 : d.stock().low() * 100 / d.stock().variants()} + '%'"></span>
+          <span class="bg-danger" th:style="'width:' + ${d.stock().variants() == 0 ? 0 : d.stock().out() * 100 / d.stock().variants()} + '%'"></span>
+        </div>
+        <div class="small mt-1"><span class="text-warning fw-semibold" th:text="${d.stock().low()} + ' ' + #{stock.status.low}">0 low</span> · <span class="text-danger fw-semibold" th:text="${d.stock().out()} + ' ' + #{stock.status.out}">0 out</span></div>
+      </div>
+    </div>
+    <div class="col-6 col-xl-3" sec:authorize="hasAuthority('WHATSAPP_HISTORY')">
+      <div class="card kpi">
+        <span class="ico ico-green"><i class="bi bi-whatsapp"></i></span>
+        <div class="label" th:text="#{dash.whatsapp}">Bills on WhatsApp</div>
+        <div class="value" th:text="${(d.whatsappCounts().getOrDefault('SENT',0L) + d.whatsappCounts().getOrDefault('DELIVERED',0L) + d.whatsappCounts().getOrDefault('READ',0L) + d.whatsappCounts().getOrDefault('OPENED',0L))}">0</div>
+        <div class="small"><span class="text-success" th:text="${d.whatsappCounts().getOrDefault('READ',0L)} + ' ' + #{wa.status.READ}">0 read</span> ·
+          <span class="text-danger" th:text="${d.whatsappCounts().getOrDefault('FAILED',0L)} + ' ' + #{wa.status.FAILED}">0 failed</span>
+          · <a th:href="@{/whatsapp}" th:text="#{dash.history}">History</a></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- trend + categories -->
+  <div class="row g-3 mb-3">
+    <div class="col-xl-8">
+      <div class="card h-100">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <span th:text="#{dash.trend}">Sales trend</span>
+          <div class="btn-group btn-group-sm">
+            <a class="btn btn-outline-secondary" th:classappend="${days == 7} ? 'active'" th:href="@{/(days=7)}">7</a>
+            <a class="btn btn-outline-secondary" th:classappend="${days == 14} ? 'active'" th:href="@{/(days=14)}">14</a>
+            <a class="btn btn-outline-secondary" th:classappend="${days == 30} ? 'active'" th:href="@{/(days=30)}">30</a>
+            <a class="btn btn-outline-secondary" th:classappend="${days == 90} ? 'active'" th:href="@{/(days=90)}">90</a>
+          </div>
+        </div>
+        <div class="card-body"><div class="chart-box"><canvas id="trendChart"></canvas></div></div>
+      </div>
+    </div>
+    <div class="col-xl-4">
+      <div class="card h-100">
+        <div class="card-header" th:text="#{dash.category.share}">Sales by category (30 days)</div>
+        <div class="card-body"><div class="chart-box"><canvas id="catChart"></canvas></div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-3 mb-3">
+    <div class="col-lg-4">
+      <div class="card h-100">
+        <div class="card-header" th:text="#{dash.payment.mix}">How customers pay (30 days)</div>
+        <div class="card-body"><div class="chart-box sm"><canvas id="payChart"></canvas></div></div>
+      </div>
+    </div>
+    <div class="col-lg-8">
+      <div class="card h-100">
+        <div class="card-header" th:text="#{dash.busy.hours}">Busy hours (30 days)</div>
+        <div class="card-body"><div class="chart-box sm"><canvas id="hourChart"></canvas></div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-3 mb-3">
+    <div class="col-lg-6">
+      <div class="card h-100">
+        <div class="card-header" th:text="#{dash.top.products}">Best sellers (30 days)</div>
+        <div class="table-responsive">
+          <table class="table table-hover mb-0">
+            <thead><tr><th>#</th><th th:text="#{col.product}">Product</th><th class="text-end" th:text="#{col.qty}">Qty</th><th class="text-end" th:text="#{col.sales}">Sales</th></tr></thead>
+            <tbody>
+              <tr th:each="p, i : ${d.topProducts()}"><td th:text="${i.count}">1</td><td th:text="${p.name()}">Name</td><td class="text-end num" th:text="${p.qty()}">0</td><td class="text-end money" th:text="${@fmt.money(p.value())}">0</td></tr>
+              <tr th:if="${#lists.isEmpty(d.topProducts())}"><td colspan="4" class="empty"><i class="bi bi-bag"></i><span th:text="#{dash.empty.sales}">No sales yet</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-6">
+      <div class="card h-100">
+        <div class="card-header d-flex justify-content-between"><span th:text="#{dash.low.stock}">Needs restocking</span>
+          <a class="small" th:href="@{/inventory/insights}" sec:authorize="hasAuthority('STOCK_VIEW')" th:text="#{dash.reorder.list}">Reorder list</a></div>
+        <div class="table-responsive">
+          <table class="table table-hover mb-0">
+            <thead><tr><th th:text="#{col.product}">Product</th><th th:text="#{col.size}">Size</th><th th:text="#{col.colour}">Colour</th><th class="text-end" th:text="#{col.available}">Left</th></tr></thead>
+            <tbody>
+              <tr th:each="s : ${d.lowStock()}"><td th:text="${s.product()}">p</td><td th:text="${s.size()}">M</td><td th:text="${s.colour()}">Red</td>
+                <td class="text-end"><span class="status-pill" th:classappend="${s.available() == 0} ? 'pill-bad' : 'pill-warn'" th:text="${s.available()}">0</span></td></tr>
+              <tr th:if="${#lists.isEmpty(d.lowStock())}"><td colspan="4" class="empty"><i class="bi bi-check2-circle"></i><span th:text="#{dash.empty.low}">Everything is well stocked</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card mb-3" sec:authorize="hasAuthority('SALE_VIEW')">
+    <div class="card-header d-flex justify-content-between"><span th:text="#{dash.recent}">Recent bills</span><a class="small" th:href="@{/sales}" th:text="#{common.view.all}">View all</a></div>
+    <div class="table-responsive">
+      <table class="table table-hover mb-0">
+        <thead><tr><th th:text="#{col.invoice}">Invoice</th><th th:text="#{col.time}">Time</th><th th:text="#{col.customer}">Customer</th><th class="text-end" th:text="#{col.total}">Total</th><th th:text="#{col.status}">Status</th><th>WhatsApp</th></tr></thead>
+        <tbody>
+          <tr th:each="r : ${d.recent()}">
+            <td><a th:href="@{/sales/{id}(id=${r.id()})}" th:text="${r.invoiceNo()}">INV</a></td>
+            <td th:text="${@fmt.dateTime(r.saleTime())}">time</td>
+            <td th:text="${r.customerName() != null ? r.customerName() : #messages.msg('customer.walkin')}">Walk-in</td>
+            <td class="text-end money" th:text="${@fmt.money(r.total())}">0</td>
+            <td><span class="status-pill" th:classappend="${r.status() == 'CANCELLED'} ? 'pill-bad' : (${r.balance().signum() > 0} ? 'pill-warn' : 'pill-ok')"
+                      th:text="${r.status() == 'CANCELLED'} ? #{sale.status.cancelled} : (${r.balance().signum() > 0} ? #{sale.status.due} : #{sale.status.paid})">Paid</span></td>
+            <td><span class="status-pill pill-mute" th:if="${r.waStatus() != null}" th:text="#{'wa.status.' + ${r.waStatus()}}">–</span></td>
+          </tr>
+          <tr th:if="${#lists.isEmpty(d.recent())}"><td colspan="6" class="empty"><i class="bi bi-receipt"></i><span th:text="#{dash.empty.sales}">No sales yet</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  </div>
+</th:block>
+<th:block layout:fragment="vendor-scripts"><script th:src="@{/vendor/chartjs/chart.umd.min.js}"></script></th:block>
+<th:block layout:fragment="scripts"><script th:src="@{/js/dashboard.js}"></script></th:block>
+</body>
+</html>

@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout}">
+<head><title th:text="#{report.profit-loss}">Profit &amp; loss</title></head>
+<body>
+<th:block layout:fragment="content">
+  <div class="page-head"><div><h1 th:text="#{report.profit-loss}">Profit &amp; loss</h1><div class="sub"><span th:text="${@fmt.isoDate(from)}">f</span> – <span th:text="${@fmt.isoDate(to)}">t</span></div></div>
+    <a class="btn btn-outline-secondary" th:href="@{/reports}"><i class="bi bi-arrow-left me-1"></i><span th:text="#{nav.reports}">Reports</span></a></div>
+  <div class="card mb-3"><div class="card-body"><form class="filters" method="get" th:action="@{/reports/profit-loss}">
+    <div><label class="form-label" th:text="#{filter.from}">From</label><input type="date" class="form-control" name="from" th:value="${from}"></div>
+    <div><label class="form-label" th:text="#{filter.to}">To</label><input type="date" class="form-control" name="to" th:value="${to}"></div>
+    <div><button class="btn btn-primary" type="submit" th:text="#{filter.apply}">Apply</button></div></form></div></div>
+  <div class="row g-3"><div class="col-lg-7"><div class="card"><div class="card-body"><dl class="row mb-0 pl-rows">
+    <dt class="col-8" th:text="#{pl.sales}">Sales (incl. tax, net of returns)</dt><dd class="col-4 text-end money" th:text="${@fmt.money(pl.sales())}">0</dd>
+    <dt class="col-8 fw-normal text-muted" th:text="#{pl.tax}">GST collected</dt><dd class="col-4 text-end money text-muted" th:text="${@fmt.money(pl.tax())}">0</dd>
+    <dt class="col-8" th:text="#{pl.taxable}">Sales excluding tax</dt><dd class="col-4 text-end money" th:text="${@fmt.money(pl.taxable())}">0</dd>
+    <dt class="col-8 fw-normal" th:text="#{pl.cogs}">Cost of goods sold</dt><dd class="col-4 text-end money" th:text="${@fmt.money(pl.cogs())}">0</dd>
+    <dt class="col-8 border-top pt-2" th:text="#{pl.gross}">Gross profit</dt><dd class="col-4 text-end money fw-bold border-top pt-2" th:text="${@fmt.money(pl.grossProfit())}">0</dd>
+    <dt class="col-8 fw-normal" th:text="#{pl.expenses}">Expenses</dt><dd class="col-4 text-end money" th:text="${@fmt.money(pl.expenses())}">0</dd>
+    <dt class="col-8 border-top pt-2 fs-5" th:text="#{pl.net}">Net profit</dt><dd class="col-4 text-end money fw-bold fs-5 border-top pt-2" th:classappend="${pl.netProfit().signum() < 0} ? 'text-danger' : 'text-success'" th:text="${@fmt.money(pl.netProfit())}">0</dd>
+  </dl></div></div></div>
+  <div class="col-lg-5"><div class="card"><div class="card-body"><div class="text-muted small" th:text="#{pl.purchases}">Stock bought in period</div><div class="money fs-4 fw-bold" th:text="${@fmt.money(pl.purchasesReceived())}">0</div>
+    <p class="text-muted small mt-3 mb-0" th:text="#{pl.note}">Profit uses the cost frozen on each bill line.</p></div></div></div></div>
+</th:block>
+</body>
+</html>

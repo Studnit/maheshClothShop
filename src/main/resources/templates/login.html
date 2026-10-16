@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en" th:lang="${lang}" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <title th:text="#{login.title} + ' · ' + ${shop.name()}">Sign in</title>
+  <link rel="icon" type="image/png" th:href="@{/icons/favicon-32.png}">
+  <script th:src="@{/js/theme-init.js}"></script>
+  <link rel="stylesheet" th:href="@{/vendor/bootstrap/bootstrap.min.css}">
+  <link rel="stylesheet" th:href="@{/vendor/bootstrap-icons/bootstrap-icons.min.css}">
+  <link rel="stylesheet" th:href="@{/css/app.css}">
+</head>
+<body>
+<div class="login-wrap">
+  <div class="card login-card">
+    <div class="d-flex justify-content-between align-items-start mb-3">
+      <div class="brand-mark">
+        <div class="avatar mb-2" style="width:52px;height:52px;border-radius:14px;font-size:22px;background:linear-gradient(135deg,#f59e0b,#fb7185);color:#fff" th:text="${#strings.substring(shop.name(),0,1)}">M</div>
+        <h1 class="h4 fw-bold mb-0" th:text="${shop.name()}">Mahesh Clothes Shop</h1>
+        <div class="text-muted small" th:text="${shop.village()} + ', ' + ${shop.district()}">Lohara, Dharashiv</div>
+      </div>
+      <div class="lang-switch"><a th:href="@{${currentUri}(lang='en')}" th:classappend="${uiLang == 'en'} ? 'active'">EN</a><a th:href="@{${currentUri}(lang='mr')}" th:classappend="${uiLang == 'mr'} ? 'active'">मराठी</a><a th:href="@{${currentUri}(lang='both')}" th:classappend="${uiLang == 'both'} ? 'active'" title="English + मराठी">EN+म</a></div>
+    </div>
+    <div class="alert alert-danger py-2" th:if="${param.error != null}" th:text="#{login.error}">Wrong username or password.</div>
+    <div class="alert alert-warning py-2" th:if="${param.locked != null}" th:text="#{login.locked}">Account locked.</div>
+    <div class="alert alert-success py-2" th:if="${param.logout != null}" th:text="#{login.loggedout}">You have been signed out.</div>
+    <form th:action="@{/login}" method="post" data-once>
+      <div class="mb-3">
+        <label class="form-label" for="username" th:text="#{login.username}">Username</label>
+        <input id="username" name="username" class="form-control form-control-lg" autocomplete="username" autofocus required>
+      </div>
+      <div class="mb-3">
+        <label class="form-label" for="password" th:text="#{login.password}">Password</label>
+        <input id="password" name="password" type="password" class="form-control form-control-lg" autocomplete="current-password" required>
+      </div>
+      <button class="btn btn-primary btn-lg w-100" type="submit"><i class="bi bi-box-arrow-in-right me-1"></i><span th:text="#{login.submit}">Sign in</span></button>
+    </form>
+  </div>
+</div>
+<script th:src="@{/js/app.js}"></script>
+</body></html>

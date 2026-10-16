@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout}">
+<head><title th:text="${inv.purchaseNo}">Purchase</title></head>
+<body>
+<th:block layout:fragment="content">
+  <div class="page-head">
+    <div><h1><span th:text="${inv.purchaseNo}">PUR</span> <span class="status-pill" th:classappend="${inv.status.name() == 'RECEIVED'} ? 'pill-ok' : (${inv.status.name() == 'DRAFT'} ? 'pill-warn' : 'pill-mute')" th:text="#{'purchase.status.' + ${inv.status.name()}}">s</span></h1>
+      <div class="sub"><a th:href="@{/suppliers/{id}(id=${supplier.id})}" th:text="${supplier.name}">s</a> · <span th:text="#{purchase.supplier.invoice}">Bill</span> <strong th:text="${inv.supplierInvoiceNo}">1</strong> · <span th:text="${@fmt.date(inv.purchaseDate)}">d</span></div></div>
+    <div class="d-flex gap-2 flex-wrap" sec:authorize="hasAuthority('PURCHASE_MANAGE')" th:if="${inv.status.name() == 'DRAFT'}">
+      <a class="btn btn-outline-primary" th:href="@{/purchases/{id}/edit(id=${inv.id})}"><i class="bi bi-pencil me-1"></i><span th:text="#{common.edit}">Edit</span></a>
+      <form th:action="@{/purchases/{id}/receive(id=${inv.id})}" method="post" data-once><button class="btn btn-primary" type="submit" th:attr="data-confirm=#{purchase.receive.confirm}"><i class="bi bi-box-arrow-in-down me-1"></i><span th:text="#{purchase.receive}">Receive stock</span></button></form>
+      <form th:action="@{/purchases/{id}/cancel(id=${inv.id})}" method="post"><button class="btn btn-outline-danger" type="submit" th:attr="data-confirm=#{purchase.cancel.confirm}" th:text="#{common.cancel}">Cancel</button></form>
+    </div>
+  </div>
+  <div class="row g-3">
+    <div class="col-lg-8">
+      <div class="card mb-3"><div class="table-responsive"><table class="table mb-0">
+        <thead><tr><th th:text="#{col.product}">Item</th><th class="text-end" th:text="#{col.qty}">Qty</th><th class="text-end" th:text="#{purchase.unit.price}">Price</th><th class="text-end" th:text="#{col.total}">Total</th><th class="text-end" th:text="#{purchase.landed}">Cost/item</th><th class="text-end" th:text="#{col.returned}">Returned</th></tr></thead>
+        <tbody><tr th:each="i : ${items}"><td><span th:text="${i.productName()}">p</span><small class="d-block text-muted" th:text="${@fmt.variant(i.colourName(), i.sizeName())}">c</small></td>
+          <td class="text-end num" th:text="${i.quantity()}">1</td><td class="text-end money" th:text="${@fmt.money(i.unitPrice())}">0</td><td class="text-end money" th:text="${@fmt.money(i.lineTotal())}">0</td>
+          <td class="text-end money" th:text="${@fmt.money(i.landedUnitCost())}">0</td><td class="text-end num" th:text="${i.returnedQty()}">0</td></tr></tbody></table></div></div>
+
+      <div class="card mb-3" th:if="${inv.status.name() == 'RECEIVED'}" sec:authorize="hasAuthority('PURCHASE_MANAGE')">
+        <div class="card-header" th:text="#{supplier.return.title}">Return goods to supplier</div>
+        <form class="card-body" th:action="@{/purchases/{id}/return(id=${inv.id})}" method="post" data-once>
+          <div class="row g-2 mb-2"><div class="col-md-6" th:each="i : ${items}" th:if="${i.quantity() - i.returnedQty() > 0}">
+            <div class="input-group input-group-sm"><span class="input-group-text flex-grow-1 text-start" th:text="${i.productName()} + ' ' + ${@fmt.variant(i.colourName(), i.sizeName())}">p</span>
+              <input class="form-control text-end" style="max-width:80px" type="number" min="0" th:max="${i.quantity() - i.returnedQty()}" th:name="'q_' + ${i.id()}" placeholder="0"></div></div></div>
+          <div class="input-group"><input class="form-control" name="reason" required maxlength="300" th:placeholder="#{col.reason}"><button class="btn btn-outline-warning" type="submit" th:text="#{supplier.return.btn}">Return</button></div>
+        </form>
+      </div>
+      <div class="card" th:if="${!#lists.isEmpty(returns)}"><div class="card-header" th:text="#{supplier.returns}">Returns</div><ul class="list-group list-group-flush">
+        <li class="list-group-item d-flex justify-content-between" th:each="r : ${returns}"><span><strong th:text="${r.returnNo()}">r</strong> · <span th:text="${r.reason()}">r</span></span><span class="money" th:text="${@fmt.money(r.total())}">0</span></li></ul></div>
+    </div>
+    <div class="col-lg-4">
+      <div class="card mb-3"><div class="card-body"><dl class="row mb-0">
+        <dt class="col-6 fw-normal text-muted" th:text="#{pos.subtotal}">Subtotal</dt><dd class="col-6 text-end money" th:text="${@fmt.money(inv.subtotal)}">0</dd>
+        <dt class="col-6 fw-normal text-muted" th:text="#{pos.discount}">Discount</dt><dd class="col-6 text-end money" th:text="${@fmt.money(inv.discountTotal)}">0</dd>
+        <dt class="col-6 fw-normal text-muted">GST</dt><dd class="col-6 text-end money" th:text="${@fmt.money(inv.taxTotal)}">0</dd>
+        <dt class="col-6 fw-normal text-muted" th:text="#{purchase.extra}">Freight</dt><dd class="col-6 text-end money" th:text="${@fmt.money(inv.additionalCosts)}">0</dd>
+        <dt class="col-6" th:text="#{pos.total}">Total</dt><dd class="col-6 text-end money fw-bold" th:text="${@fmt.money(inv.total)}">0</dd>
+        <dt class="col-6 fw-normal text-muted" th:text="#{col.returned}">Returned</dt><dd class="col-6 text-end money" th:text="${@fmt.money(inv.returnedTotal)}">0</dd>
+        <dt class="col-6 fw-normal text-muted" th:text="#{sale.paid}">Paid</dt><dd class="col-6 text-end money text-success" th:text="${@fmt.money(inv.amountPaid)}">0</dd>
+        <dt class="col-6" th:text="#{suppliers.balance}">Balance</dt><dd class="col-6 text-end money fw-bold text-danger" th:text="${@fmt.money(inv.outstanding())}">0</dd></dl>
+        <a class="btn btn-sm btn-outline-secondary mt-3" th:if="${inv.attachmentFileId != null}" target="_blank" th:href="@{/files/{id}(id=${inv.attachmentFileId})}"><i class="bi bi-paperclip"></i> <span th:text="#{purchase.attachment}">Supplier bill copy</span></a>
+        <form class="mt-3" th:action="@{/purchases/{id}/attachment(id=${inv.id})}" method="post" enctype="multipart/form-data" sec:authorize="hasAuthority('PURCHASE_MANAGE')" th:if="${inv.status.name() != 'CANCELLED'}">
+          <div class="input-group input-group-sm"><input class="form-control" type="file" name="file" accept="image/*,application/pdf" required><button class="btn btn-outline-primary" type="submit"><i class="bi bi-upload"></i></button></div></form>
+      </div></div>
+      <div class="card" th:if="${inv.status.name() == 'RECEIVED' and canPay and inv.outstanding().signum() > 0}"><div class="card-header" th:text="#{supplier.pay}">Pay supplier</div>
+        <form class="card-body" th:action="@{/purchases/{id}/pay(id=${inv.id})}" method="post" data-once>
+          <input class="form-control text-end mb-2" name="amount" inputmode="decimal" th:value="${inv.outstanding()}" required>
+          <div class="row g-2 mb-2"><div class="col-6"><select class="form-select" name="method"><option th:each="m : ${methods}" th:value="${m.code()}" th:text="${m.name()}">Cash</option></select></div><div class="col-6"><input class="form-control" type="date" name="paidOn" th:value="${today}"></div></div>
+          <input class="form-control mb-2" name="reference" th:placeholder="#{pos.reference}"><button class="btn btn-primary w-100" type="submit" th:text="#{common.save}">Save</button></form></div>
+      <div class="card mt-3" th:if="${!#lists.isEmpty(payments)}"><div class="card-header" th:text="#{sale.payments}">Payments</div><ul class="list-group list-group-flush">
+        <li class="list-group-item d-flex justify-content-between" th:each="p : ${payments}"><span th:text="${@fmt.date(p.paidOn())} + ' · ' + ${p.method()}">p</span><span class="money" th:text="${@fmt.money(p.amount())}">0</span></li></ul></div>
+    </div>
+  </div>
+</th:block>
+</body>
+</html>

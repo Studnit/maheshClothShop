@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout}">
+<head><title th:text="#{labels.print}">Barcode labels</title></head>
+<body>
+<th:block layout:fragment="content">
+  <div class="page-head no-print"><div><h1 th:text="#{labels.print}">Barcode labels</h1><div class="sub" th:text="#{labels.sub}">Pick a product, choose how many labels per size/colour, then print.</div></div>
+    <button class="btn btn-primary" type="button" data-print><i class="bi bi-printer me-1"></i><span th:text="#{invoice.print}">Print</span></button></div>
+  <form class="card card-body mb-3 no-print" method="get" th:action="@{/inventory/labels}">
+    <div class="filters"><select class="form-select" name="product" data-autosubmit><option value="" th:text="#{common.choose}">Choose</option>
+      <option th:each="o : ${productOptions}" th:value="${o.id()}" th:selected="${o.id() == product}" th:text="${o.name()}">p</option></select>
+      <div class="input-group" style="max-width:220px"><span class="input-group-text" th:text="#{labels.copies}">Copies</span><input class="form-control" type="number" id="copies" value="1" min="1" max="50"></div></div>
+  </form>
+  <div id="labelSheet" class="label-sheet" th:data-shop="${shop.name()}" th:data-product="${productName}">
+    <div class="label-item" hidden th:each="v : ${variants}" th:if="${v.active()}"
+         th:data-code="${#strings.isEmpty(v.barcode()) ? v.sku() : v.barcode()}" th:data-sku="${v.sku()}"
+         th:data-colour="${v.colourName()}" th:data-size="${v.sizeName()}"></div>
+  </div>
+  <div class="empty no-print" th:if="${#lists.isEmpty(variants)}"><i class="bi bi-upc"></i><span th:text="#{labels.empty}">Choose a product</span></div>
+</th:block>
+<th:block layout:fragment="scripts"><script th:src="@{/js/code128.js}"></script><script th:src="@{/js/labels.js}"></script></th:block>
+</body>
+</html>

@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout}">
+<head><title th:text="${p.name}">Product</title></head>
+<body>
+<th:block layout:fragment="content">
+  <div class="page-head">
+    <div><h1><span th:text="${p.name}">Name</span> <span class="status-pill pill-mute" th:unless="${p.active}" th:text="#{status.inactive}">Inactive</span></h1>
+      <div class="sub"><span th:text="${p.productCode}">P00001</span> · SKU <span th:text="${p.sku}">SKU</span> · <span th:text="${category}">cat</span></div></div>
+    <div class="d-flex gap-2" sec:authorize="hasAuthority('PRODUCT_MANAGE')">
+      <a class="btn btn-outline-primary" th:href="@{/products/{id}/edit(id=${p.id})}"><i class="bi bi-pencil me-1"></i><span th:text="#{common.edit}">Edit</span></a>
+      <form th:action="@{/products/{id}/active(id=${p.id})}" method="post"><input type="hidden" name="value" th:value="${!p.active}">
+        <button class="btn btn-outline-secondary" type="submit" th:text="${p.active} ? #{common.deactivate} : #{common.activate}">Deactivate</button></form>
+    </div>
+  </div>
+  <div class="row g-3">
+    <div class="col-lg-4">
+      <div class="card"><div style="height:240px;background:var(--brand-50);display:grid;place-items:center;border-radius:14px 14px 0 0;overflow:hidden;font-size:60px;color:var(--brand)">
+          <img th:if="${p.imageFileId != null}" alt="" th:src="@{/files/{id}(id=${p.imageFileId})}" style="width:100%;height:100%;object-fit:cover"><i th:unless="${p.imageFileId != null}" class="bi bi-handbag"></i></div>
+        <div class="card-body">
+          <dl class="row mb-0 small">
+            <dt class="col-6 fw-normal text-muted" th:text="#{products.sellprice}">Price</dt><dd class="col-6 text-end money" th:text="${@fmt.money(p.sellingPrice)}">0</dd>
+            <dt class="col-6 fw-normal text-muted" th:if="${p.mrp != null}">MRP</dt><dd class="col-6 text-end money" th:if="${p.mrp != null}" th:text="${@fmt.money(p.mrp)}">0</dd>
+            <th:block sec:authorize="hasAuthority('COST_VIEW')"><dt class="col-6 fw-normal text-muted" th:text="#{products.cost}">Cost</dt><dd class="col-6 text-end money" th:text="${@fmt.money(p.purchaseCost)}">0</dd></th:block>
+            <dt class="col-6 fw-normal text-muted" th:if="${shop.taxEnabled()}">GST</dt><dd class="col-6 text-end" th:if="${shop.taxEnabled()}" th:text="${@fmt.percent(p.taxRate)} + '%'">0</dd>
+            <dt class="col-6 fw-normal text-muted" th:if="${p.fabric != null}" th:text="#{products.fabric}">Fabric</dt><dd class="col-6 text-end" th:if="${p.fabric != null}" th:text="${p.fabric}"></dd>
+            <dt class="col-6 fw-normal text-muted" th:if="${p.design != null}" th:text="#{products.design}">Design</dt><dd class="col-6 text-end" th:if="${p.design != null}" th:text="${p.design}"></dd>
+          </dl>
+          <p class="small mt-2 mb-0" th:if="${p.description != null}" th:text="${p.description}"></p>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-8">
+      <div class="card mb-3">
+        <div class="card-header d-flex justify-content-between"><span th:text="#{products.variants}">Variants &amp; stock</span>
+          <a class="small" th:href="@{/inventory/labels(product=${p.id})}" sec:authorize="hasAuthority('STOCK_VIEW')"><i class="bi bi-upc"></i> <span th:text="#{labels.print}">Print labels</span></a></div>
+        <div class="table-responsive"><table class="table mb-0">
+          <thead><tr><th th:text="#{col.colour}">Colour</th><th th:text="#{col.size}">Size</th><th>SKU</th><th th:text="#{products.barcode}">Barcode</th><th class="text-end" th:text="#{col.available}">Stock</th><th class="text-end" th:text="#{col.damaged}">Damaged</th><th></th></tr></thead>
+          <tbody>
+            <tr th:each="v : ${variants}" th:classappend="${!v.active()} ? 'opacity-50'">
+              <td><span th:if="${v.colourHex() != null}" class="rounded-circle d-inline-block border me-1" th:style="'width:12px;height:12px;background:' + ${v.colourHex()}"></span><span th:text="${v.colourName()}">Red</span></td>
+              <td th:text="${v.sizeName()}">M</td><td class="small" th:text="${v.sku()}">sku</td>
+              <td>
+                <form class="d-flex gap-1" th:action="@{/products/{id}/variants/{vid}(id=${p.id}, vid=${v.id()})}" method="post" sec:authorize="hasAuthority('PRODUCT_MANAGE')">
+                  <input class="form-control form-control-sm" name="barcode" th:value="${v.barcode()}" style="min-width:120px" th:placeholder="#{products.barcode}">
+                  <input class="form-control form-control-sm text-end" name="priceOverride" th:value="${v.priceOverride()}" style="width:90px" th:placeholder="#{products.price.override}" inputmode="decimal">
+                  <button class="btn btn-sm btn-outline-primary" type="submit"><i class="bi bi-check2"></i></button>
+                </form>
+                <span sec:authorize="!hasAuthority('PRODUCT_MANAGE')" th:text="${v.barcode()}"></span>
+              </td>
+              <td class="text-end"><span class="status-pill" th:classappend="${v.available() == 0} ? 'pill-bad' : 'pill-ok'" th:text="${v.available()}">0</span></td>
+              <td class="text-end num" th:text="${v.damaged()}">0</td>
+              <td class="text-end">
+                <form th:action="@{/products/{id}/variants/{vid}/active(id=${p.id}, vid=${v.id()})}" method="post" sec:authorize="hasAuthority('PRODUCT_MANAGE')">
+                  <input type="hidden" name="value" th:value="${!v.active()}"><button class="btn btn-sm btn-link p-0" type="submit" th:text="${v.active()} ? #{common.deactivate} : #{common.activate}">off</button></form>
+              </td>
+            </tr>
+          </tbody>
+        </table></div>
+      </div>
+      <div class="card" sec:authorize="hasAuthority('PRODUCT_MANAGE')">
+        <div class="card-header" th:text="#{products.add.variants}">Add sizes / colours</div>
+        <form class="card-body" th:action="@{/products/{id}/variants(id=${p.id})}" method="post">
+          <div class="d-flex flex-wrap gap-2 mb-2"><label class="chip" th:each="s : ${sizes}"><input class="form-check-input me-1" type="checkbox" name="sizeIds" th:value="${s.id}"><span th:text="${s.name}">M</span></label></div>
+          <div class="d-flex flex-wrap gap-2 mb-3"><label class="chip" th:each="c : ${colours}"><input class="form-check-input me-1" type="checkbox" name="colourIds" th:value="${c.id}"><span th:text="${c.name}">Red</span></label></div>
+          <button class="btn btn-outline-primary" type="submit"><i class="bi bi-plus-lg me-1"></i><span th:text="#{products.add.variants.btn}">Add</span></button>
+        </form>
+      </div>
+    </div>
+  </div>
+</th:block>
+</body>
+</html>

@@ -1,0 +1,12 @@
+# Development profile: templates are not cached and logging is verbose. No demo data (see application-demo.yml).
+spring:
+  thymeleaf:
+    cache: false
+  web:
+    resources:
+      cache:
+        cachecontrol:
+          max-age: 0
+logging:
+  level:
+    com.maheshclothes: DEBUG

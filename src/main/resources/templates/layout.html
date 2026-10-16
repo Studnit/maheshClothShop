@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en" th:lang="${lang}" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#4338ca">
+  <meta name="_csrf" th:content="${_csrf.token}">
+  <meta name="_csrf_header" th:content="${_csrf.headerName}">
+  <meta name="app-lang" th:content="${lang}">
+  <title layout:title-pattern="$CONTENT_TITLE · $LAYOUT_TITLE" th:text="${shop.name()}">Mahesh Clothes Shop</title>
+  <link rel="icon" type="image/png" th:href="@{/icons/favicon-32.png}">
+  <link rel="apple-touch-icon" th:href="@{/icons/apple-touch-icon.png}">
+  <link rel="manifest" th:href="@{/manifest.webmanifest}">
+  <script th:src="@{/js/theme-init.js}"></script>
+  <link rel="stylesheet" th:href="@{/vendor/bootstrap/bootstrap.min.css}">
+  <link rel="stylesheet" th:href="@{/vendor/bootstrap-icons/bootstrap-icons.min.css}">
+  <link rel="stylesheet" th:href="@{/css/app.css}">
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar" id="sidebar" th:fragment="sidebar">
+    <a class="brand" th:href="@{/}">
+      <span class="logo">
+        <img th:if="${shop.hasLogo()}" th:src="@{/files/{id}(id=${shop.logoFileId()})}" alt="">
+        <span th:unless="${shop.hasLogo()}" th:text="${#strings.substring(shop.name(),0,1)}">M</span>
+      </span>
+      <span><span class="name d-block" th:text="${shop.name()}">Mahesh Clothes Shop</span>
+        <span class="sub" th:text="${shop.village()} + (${#strings.isEmpty(shop.district())} ? '' : ', ' + ${shop.district()})">Lohara, Dharashiv</span></span>
+    </a>
+    <nav class="nav flex-column">
+      <a class="nav-link" th:classappend="${currentUri == '/'} ? 'active'" th:href="@{/}" sec:authorize="isAuthenticated()"><i class="bi bi-speedometer2"></i><span th:text="#{nav.dashboard}">Dashboard</span></a>
+
+      <div class="nav-section" sec:authorize="hasAnyAuthority('SALE_CREATE','SALE_VIEW','RETURN_PROCESS','CUSTOMER_VIEW')" th:text="#{nav.section.sales}">Sales</div>
+      <a class="nav-link" th:classappend="${#strings.startsWith(currentUri,'/pos')} ? 'active'" th:href="@{/pos}" sec:authorize="hasAuthority('SALE_CREATE')"><i class="bi bi-upc-scan"></i><span th:text="#{nav.pos}">New Bill</span></a>
+      <a class="nav-link" th:classappend="${#strings.startsWith(currentUri,'/sales')} ? 'active'" th:href="@{/sales}" sec:authorize="hasAuthority('SALE_VIEW')"><i class="bi bi-receipt"></i><span th:text="#{nav.sales}">Invoices</span></a>
+      <a class="nav-link" th:classappend="${#strings.startsWith(currentUri,'/returns')} ? 'active'" th:href="@{/returns}" sec:authorize="hasAuthority('RETURN_PROCESS')"><i class="bi bi-arrow-return-left"></i><span th:text="#{nav.returns}">Returns</span></a>
+      <a class="nav-link" th:classappend="${#strings.startsWith(currentUri,'/customers')} ? 'active'" th:href="@{/customers}" sec:authorize="hasAuthority('CUSTOMER_VIEW')"><i class="bi bi-people"></i><span th:text="#{nav.customers}">Customers</span></a>
+      <a class="nav-link" th:classappend="${#strings.startsWith(currentUri,'/whatsapp')} ? 'active'" th:href="@{/whatsapp}" sec:authorize="hasAuthority('WHATSAPP_HISTORY')"><i class="bi bi-whatsapp"></i><span th:text="#{nav.whatsapp}">WhatsApp history</span></a>
+
+      <div class="nav-section" sec:authorize="hasAnyAuthority('PRODUCT_VIEW','STOCK_VIEW','PURCHASE_VIEW','SUPPLIER_VIEW')" th:text="#{nav.section.inventory}">Inventory</div>
+      <a class="nav-link" th:classappend="${#strings.startsWith(currentUri,'/products')} ? 'active'" th:href="@{/products}" sec:authorize="hasAuthority('PRODUCT_VIEW')"><i class="bi bi-tags"></i><span th:text="#{nav.products}">Products</span></a>
+      <a class="nav-link" th:classappend="${currentUri == '/inventory' or #strings.startsWith(currentUri,'/inventory/stock') or #strings.startsWith(currentUri,'/inventory/adjust') or #strings.startsWith(currentUri,'/inventory/count') or #strings.startsWith(currentUri,'/inventory/movements')} ? 'active'" th:href="@{/inventory}" sec:authorize="hasAuthority('STOCK_VIEW')"><i class="bi bi-boxes"></i><span th:text="#{nav.stock}">Stock</span></a>
+      <a class="nav-link" th:classappend="${#strings.startsWith(currentUri,'/inventory/insights') or #strings.startsWith(currentUri,'/inventory/labels')} ? 'active'" th:href="@{/inventory/insights}" sec:authorize="hasAuthority('STOCK_VIEW')"><i class="bi bi-graph-up-arrow"></i><span th:text="#{nav.insights}">Stock insights</span></a>
+      <a class="nav-link" th:classappend="${#strings.startsWith(currentUri,'/purchases')} ? 'active'" th:href="@{/purchases}" sec:authorize="hasAuthority('PURCHASE_VIEW')"><i class="bi bi-truck"></i><span th:text="#{nav.purchases}">Purchases</span></a>
+      <a class="nav-link" th:classappend="${#strings.startsWith(currentUri,'/suppliers')} ? 'active'" th:href="@{/suppliers}" sec:authorize="hasAuthority('SUPPLIER_VIEW')"><i class="bi bi-shop"></i><span th:text="#{nav.suppliers}">Suppliers</span></a>
+      <a class="nav-link" th:classappend="${#strings.startsWith(currentUri,'/catalog')} ? 'active'" th:href="@{/catalog}" sec:authorize="hasAuthority('PRODUCT_MANAGE')"><i class="bi bi-diagram-3"></i><span th:text="#{nav.catalog}">Categories &amp; sizes</span></a>
+
+      <div class="nav-section" sec:authorize="hasAnyAuthority('EXPENSE_VIEW','REPORT_SALES','REPORT_STOCK','REPORT_FINANCIAL')" th:text="#{nav.section.business}">Business</div>
+      <a class="nav-link" th:classappend="${#strings.startsWith(currentUri,'/expenses')} ? 'active'" th:href="@{/expenses}" sec:authorize="hasAuthority('EXPENSE_VIEW')"><i class="bi bi-wallet2"></i><span th:text="#{nav.expenses}">Expenses</span></a>
+      <a class="nav-link" th:classappend="${#strings.startsWith(currentUri,'/reports')} ? 'active'" th:href="@{/reports}" sec:authorize="hasAnyAuthority('REPORT_SALES','REPORT_STOCK','REPORT_FINANCIAL')"><i class="bi bi-bar-chart-line"></i><span th:text="#{nav.reports}">Reports</span></a>
+
+      <div class="nav-section" sec:authorize="hasAnyAuthority('USER_MANAGE','SETTINGS_MANAGE','AUDIT_VIEW')" th:text="#{nav.section.admin}">Admin</div>
+      <a class="nav-link" th:classappend="${#strings.startsWith(currentUri,'/admin/users') or #strings.startsWith(currentUri,'/admin/roles')} ? 'active'" th:href="@{/admin/users}" sec:authorize="hasAuthority('USER_MANAGE')"><i class="bi bi-person-gear"></i><span th:text="#{nav.users}">Users &amp; roles</span></a>
+      <a class="nav-link" th:classappend="${#strings.startsWith(currentUri,'/settings')} ? 'active'" th:href="@{/settings}" sec:authorize="hasAuthority('SETTINGS_MANAGE')"><i class="bi bi-gear"></i><span th:text="#{nav.settings}">Settings</span></a>
+      <a class="nav-link" th:classappend="${#strings.startsWith(currentUri,'/admin/audit')} ? 'active'" th:href="@{/admin/audit}" sec:authorize="hasAuthority('AUDIT_VIEW')"><i class="bi bi-shield-check"></i><span th:text="#{nav.audit}">Audit log</span></a>
+    </nav>
+  </aside>
+
+  <div class="main">
+    <header class="topbar no-print">
+      <button class="icon-btn d-lg-none" type="button" id="sidebarToggle" th:aria-label="#{nav.menu}"><i class="bi bi-list"></i></button>
+      <form class="search d-none d-md-block" th:action="@{/sales}" method="get" sec:authorize="hasAuthority('SALE_VIEW')">
+        <i class="bi bi-search"></i>
+        <input type="search" name="q" class="form-control" th:placeholder="#{search.global}" autocomplete="off">
+      </form>
+      <div class="ms-auto d-flex align-items-center gap-2">
+        <a class="btn btn-primary btn-sm d-none d-sm-inline-flex align-items-center gap-1" th:href="@{/pos}" sec:authorize="hasAuthority('SALE_CREATE')"><i class="bi bi-plus-lg"></i><span th:text="#{nav.pos}">New Bill</span></a>
+        <div class="lang-switch" role="group" th:aria-label="#{lang.switch}">
+          <a th:href="@{${currentUri}(lang='en')}" th:classappend="${uiLang == 'en'} ? 'active'">EN</a>
+          <a th:href="@{${currentUri}(lang='mr')}" th:classappend="${uiLang == 'mr'} ? 'active'">मराठी</a><a th:href="@{${currentUri}(lang='both')}" th:classappend="${uiLang == 'both'} ? 'active'" title="English + मराठी">EN+म</a>
+        </div>
+        <button class="icon-btn" type="button" id="themeToggle" th:title="#{theme.toggle}"><i class="bi bi-moon-stars"></i></button>
+        <div class="dropdown" sec:authorize="isAuthenticated()">
+          <button class="btn p-0 border-0" data-bs-toggle="dropdown" aria-expanded="false">
+            <span class="avatar" th:text="${#strings.toUpperCase(#strings.substring(#authentication.name,0,1))}">A</span>
+          </button>
+          <ul class="dropdown-menu dropdown-menu-end">
+            <li><span class="dropdown-item-text small text-muted" sec:authentication="name">user</span></li>
+            <li><a class="dropdown-item" th:href="@{/account}"><i class="bi bi-key me-2"></i><span th:text="#{nav.account}">My account</span></a></li>
+            <li><hr class="dropdown-divider"></li>
+            <li>
+              <form th:action="@{/logout}" method="post"><button class="dropdown-item" type="submit"><i class="bi bi-box-arrow-right me-2"></i><span th:text="#{nav.logout}">Sign out</span></button></form>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </header>
+
+    <main class="content">
+      <div class="alert alert-success alert-dismissible fade show" role="alert" th:if="${success != null}">
+        <i class="bi bi-check-circle me-1"></i><span th:text="${success}"></span><button type="button" class="btn-close" data-bs-dismiss="alert" th:aria-label="#{common.close}"></button>
+      </div>
+      <div class="alert alert-success alert-dismissible fade show" role="alert" th:if="${successKey != null}">
+        <i class="bi bi-check-circle me-1"></i><span th:text="${@msg.get(successKey)}"></span><button type="button" class="btn-close" data-bs-dismiss="alert" th:aria-label="#{common.close}"></button>
+      </div>
+      <div class="alert alert-danger alert-dismissible fade show" role="alert" th:if="${error != null}">
+        <i class="bi bi-exclamation-triangle me-1"></i><span th:text="${error}"></span><button type="button" class="btn-close" data-bs-dismiss="alert" th:aria-label="#{common.close}"></button>
+      </div>
+      <div class="alert alert-danger" role="alert" th:if="${errorKey != null}">
+        <i class="bi bi-exclamation-triangle me-1"></i><span th:text="${@msg.get(errorKey, errorArgs)}"></span>
+      </div>
+      <th:block layout:fragment="content">Page content</th:block>
+    </main>
+  </div>
+</div>
+<script th:src="@{/vendor/bootstrap/bootstrap.bundle.min.js}"></script>
+<th:block layout:fragment="vendor-scripts"></th:block>
+<script th:src="@{/js/app.js}"></script>
+<th:block layout:fragment="scripts"></th:block>
+</body>
+</html>

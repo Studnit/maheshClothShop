@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout}">
+<head><title th:text="#{nav.catalog}">Catalog</title></head>
+<body>
+<th:block layout:fragment="content">
+  <div class="page-head"><div><h1 th:text="#{nav.catalog}">Categories &amp; sizes</h1><div class="sub" th:text="#{catalog.sub}">Lists used on products</div></div></div>
+  <ul class="nav nav-pills mb-3">
+    <li class="nav-item" th:each="t : ${types}"><a class="nav-link" th:classappend="${t.name() == type} ? 'active'" th:href="@{/catalog(type=${t.name()})}" th:text="#{'catalog.type.' + ${t.name()}}">t</a></li>
+  </ul>
+  <div class="row g-3">
+    <div class="col-lg-4">
+      <div class="card"><div class="card-header" th:text="#{catalog.add}">Add new</div>
+        <form class="card-body" th:action="@{/catalog/{t}(t=${type})}" method="post" data-once>
+          <div class="mb-2"><label class="form-label" th:text="#{col.name}">Name</label><input class="form-control" name="name" required maxlength="80"></div>
+          <div class="mb-2"><label class="form-label" th:text="#{catalog.sort}">Order</label><input class="form-control" name="sortOrder" type="number" value="0"></div>
+          <div class="mb-3" th:if="${type == 'colours'}"><label class="form-label" th:text="#{catalog.hex}">Colour (hex)</label><input class="form-control form-control-color" name="hex" type="color" value="#cccccc"></div>
+          <button class="btn btn-primary w-100" type="submit" th:text="#{common.save}">Save</button>
+        </form></div>
+    </div>
+    <div class="col-lg-8">
+      <div class="card"><div class="table-responsive"><table class="table table-hover mb-0">
+        <thead><tr><th th:text="#{col.name}">Name</th><th th:text="#{catalog.sort}">Order</th><th th:text="#{col.status}">Status</th><th></th></tr></thead>
+        <tbody>
+          <tr th:each="i : ${items}">
+            <td>
+              <form class="d-flex gap-2 align-items-center" th:action="@{/catalog/{t}(t=${type})}" method="post">
+                <input type="hidden" name="id" th:value="${i.id}">
+                <input class="form-control form-control-sm" name="name" th:value="${i.name}" required maxlength="80">
+                <input class="form-control form-control-sm" style="width:80px" name="sortOrder" type="number" th:value="${i.sortOrder}">
+                <input class="form-control form-control-color form-control-sm" th:if="${type == 'colours'}" name="hex" type="color" th:value="${i.hexCode != null ? i.hexCode : '#cccccc'}">
+                <button class="btn btn-sm btn-outline-primary" type="submit"><i class="bi bi-check2"></i></button>
+              </form>
+            </td>
+            <td class="num" th:text="${i.sortOrder}">0</td>
+            <td><span class="status-pill" th:classappend="${i.active} ? 'pill-ok' : 'pill-mute'" th:text="${i.active} ? #{status.active} : #{status.inactive}">Active</span></td>
+            <td class="text-end"><form th:action="@{/catalog/{t}/{id}/toggle(t=${type}, id=${i.id})}" method="post"><button class="btn btn-sm btn-link" type="submit" th:text="${i.active} ? #{common.deactivate} : #{common.activate}">toggle</button></form></td>
+          </tr>
+        </tbody>
+      </table></div></div>
+    </div>
+  </div>
+</th:block>
+</body>
+</html>

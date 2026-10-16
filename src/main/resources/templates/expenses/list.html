@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout}">
+<head><title th:text="#{nav.expenses}">Expenses</title></head>
+<body>
+<th:block layout:fragment="content">
+  <div class="page-head"><div><h1 th:text="#{nav.expenses}">Expenses</h1><div class="sub"><span th:text="#{expense.total}">Total in period</span>: <strong class="money" th:text="${@fmt.money(total)}">0</strong></div></div>
+    <a class="btn btn-primary" th:href="@{/expenses/new}" sec:authorize="hasAuthority('EXPENSE_MANAGE')"><i class="bi bi-plus-lg me-1"></i><span th:text="#{expense.new}">Add expense</span></a></div>
+  <div class="row g-3"><div class="col-lg-9"><div class="card">
+    <div class="card-body border-bottom"><form class="filters" method="get" th:action="@{/expenses}">
+      <div><label class="form-label" th:text="#{filter.from}">From</label><input type="date" class="form-control" name="from" th:value="${from}"></div>
+      <div><label class="form-label" th:text="#{filter.to}">To</label><input type="date" class="form-control" name="to" th:value="${to}"></div>
+      <div><label class="form-label" th:text="#{expense.category}">Category</label><select class="form-select" name="category"><option value="" th:text="#{filter.all}">All</option><option th:each="c : ${categories}" th:value="${c.id()}" th:text="${c.name()}" th:selected="${c.id() == category}">c</option></select></div>
+      <div><label class="form-label" th:text="#{filter.search}">Search</label><input class="form-control" name="q" th:value="${q}"></div>
+      <div><button class="btn btn-primary" type="submit"><i class="bi bi-search"></i></button></div></form></div>
+    <div class="table-responsive"><table class="table table-hover mb-0">
+      <thead><tr><th th:text="#{col.date}">Date</th><th th:text="#{expense.category}">Category</th><th th:text="#{col.description}">Description</th><th th:text="#{col.method}">Method</th><th class="text-end" th:text="#{col.amount}">Amount</th><th></th></tr></thead>
+      <tbody><tr th:each="e : ${page.items()}"><td th:text="${@fmt.isoDate(e.date())}">d</td><td th:text="${e.category()}">c</td>
+        <td><span th:text="${e.description()}">d</span> <a th:if="${e.receiptFileId()}" th:href="@{/files/{id}(id=${e.receiptFileId()})}" target="_blank" rel="noopener"><i class="bi bi-paperclip"></i></a></td>
+        <td th:text="${e.method()}">m</td><td class="text-end money" th:text="${@fmt.money(e.amount())}">0</td>
+        <td class="text-end text-nowrap" sec:authorize="hasAuthority('EXPENSE_MANAGE')"><a class="btn btn-sm btn-outline-secondary" th:href="@{/expenses/{id}/edit(id=${e.id()})}"><i class="bi bi-pencil"></i></a>
+          <form class="d-inline" method="post" th:action="@{/expenses/{id}/delete(id=${e.id()})}"><button class="btn btn-sm btn-outline-danger" type="submit" th:attr="data-confirm=#{confirm.delete}"><i class="bi bi-trash"></i></button></form></td></tr>
+        <tr th:if="${#lists.isEmpty(page.items())}"><td colspan="6"><div th:replace="~{fragments/ui :: empty('wallet2', 'expense.empty')}"></div></td></tr></tbody></table></div>
+    <div th:replace="~{fragments/ui :: pager(${page})}"></div></div></div>
+  <div class="col-lg-3"><div class="card"><div class="card-body"><h2 class="h6" th:text="#{expense.by.category}">By category</h2>
+    <div class="d-flex justify-content-between py-1" th:each="b : ${breakdown}"><span th:text="${b.category()}">c</span><span class="money" th:text="${@fmt.money(b.total())}">0</span></div>
+    <div class="text-muted small" th:if="${#lists.isEmpty(breakdown)}" th:text="#{expense.empty}">None</div></div></div></div></div>
+</th:block>
+</body>
+</html>

@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en" th:lang="${lang}" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <title th:text="${inv.invoiceNo}">Receipt</title>
+  <link rel="stylesheet" th:href="@{/vendor/bootstrap/bootstrap.min.css}">
+  <link rel="stylesheet" th:href="@{/vendor/bootstrap-icons/bootstrap-icons.min.css}">
+  <link rel="stylesheet" th:href="@{/css/app.css}">
+  <style th:text="'@media print { @page { size: ' + ${width} + 'mm auto; margin: 2mm; } body { width: ' + (${width} - 6) + 'mm; } }'"></style>
+</head>
+<body class="print-thermal" style="background:#eef0f6">
+<div class="container py-3" style="max-width:420px">
+  <div class="no-print d-flex justify-content-between gap-2 mb-3">
+    <a class="btn btn-outline-secondary" th:href="@{/sales/{id}(id=${inv.id})}"><i class="bi bi-arrow-left"></i></a>
+    <div class="btn-group">
+      <a class="btn btn-outline-primary" th:classappend="${width == 58} ? 'active'" th:href="@{/sales/{id}/receipt(id=${inv.id}, w=58)}">58 mm</a>
+      <a class="btn btn-outline-primary" th:classappend="${width == 80} ? 'active'" th:href="@{/sales/{id}/receipt(id=${inv.id}, w=80)}">80 mm</a>
+    </div>
+    <button class="btn btn-primary" type="button" id="printNow"><i class="bi bi-printer"></i></button>
+  </div>
+  <div class="invoice-sheet thermal" th:classappend="${width == 58} ? 'w58'">
+    <div class="text-center">
+      <div class="fw-bold" style="font-size:1.15em" th:text="${shop.name()}">Shop</div>
+      <div th:if="${!#strings.isEmpty(shop.addressLine())}" th:text="${shop.addressLine()}"></div>
+      <div th:if="${!#strings.isEmpty(shop.phone())}" th:text="${shop.phone()}"></div>
+      <div th:if="${shop.taxEnabled() and !#strings.isEmpty(shop.gstin())}">GSTIN <span th:text="${shop.gstin()}"></span></div>
+    </div>
+    <hr>
+    <div><span th:text="${inv.invoiceNo}">INV</span><br><span th:text="${@fmt.dateTime(inv.saleTime)}">date</span></div>
+    <div th:if="${inv.customerName != null}" th:text="${inv.customerName}"></div>
+    <hr>
+    <table>
+      <thead><tr><th th:text="#{col.product}">Item</th><th class="r" th:text="#{col.qty}">Qty</th><th class="r" th:text="#{col.amount}">Amt</th></tr></thead>
+      <tbody>
+        <tr th:each="l : ${lines}">
+          <td><span th:text="${l.productName()}">p</span><small class="d-block" th:text="${(l.colourName() != null ? l.colourName() : '') + (l.sizeName() != null ? ' ' + l.sizeName() : '') + ' @' + @fmt.amount(l.unitPrice())}"></small></td>
+          <td class="r" th:text="${l.quantity()}">1</td>
+          <td class="r" th:text="${@fmt.amount(l.lineTotal())}">0</td>
+        </tr>
+      </tbody>
+    </table>
+    <hr>
+    <table>
+      <tr th:if="${inv.lineDiscountTotal.add(inv.invoiceDiscount).signum() > 0}"><td th:text="#{pos.discount}">Discount</td><td class="r" th:text="'-' + ${@fmt.amount(inv.lineDiscountTotal.add(inv.invoiceDiscount))}">0</td></tr>
+      <tr th:if="${shop.taxEnabled()}"><td th:text="#{pos.tax}">GST</td><td class="r" th:text="${@fmt.amount(inv.taxTotal)}">0</td></tr>
+      <tr th:if="${inv.roundOff.signum() != 0}"><td th:text="#{pos.roundoff}">Round off</td><td class="r" th:text="${@fmt.amount(inv.roundOff)}">0</td></tr>
+      <tr class="fw-bold" style="font-size:1.15em"><td th:text="#{pos.total}">TOTAL</td><td class="r" th:text="${@fmt.money(inv.total)}">0</td></tr>
+      <tr><td th:text="#{sale.paid}">Paid</td><td class="r" th:text="${@fmt.amount(inv.amountPaid)}">0</td></tr>
+      <tr th:if="${inv.balanceDue.signum() > 0}" class="fw-bold"><td th:text="#{col.due}">Due</td><td class="r" th:text="${@fmt.amount(inv.balanceDue)}">0</td></tr>
+    </table>
+    <div class="small" th:each="p : ${payments}" th:text="${p.methodName()} + ' ' + ${@fmt.amount(p.amount())}"></div>
+    <hr>
+    <div class="text-center" th:text="${shop.footer()}">Thank you</div>
+    <div class="text-center" th:if="${!#strings.isEmpty(shop.returnPolicy())}" th:text="${shop.returnPolicy()}"></div>
+  </div>
+</div>
+<script th:src="@{/js/print.js}"></script>
+</body></html>
