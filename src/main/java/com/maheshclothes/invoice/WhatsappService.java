@@ -157,8 +157,34 @@ public class WhatsappService {
         return new ShareLink(id, url, text, to);
     }
 
+    public record Preview(String text, String phone, String link, String invoiceNo) {
+    }
+
+    /** The exact message the owner is about to send, shown on screen first. Records nothing. */
+    public Preview preview(UUID invoiceId) {
+        Inv inv = invoice(invoiceId);
+        InvoiceArchiveService.Archived doc = archive.ensure(invoiceId);
+        String link = publicLink(doc.token());
+        String to = PhoneNumbers.toWhatsApp(inv.phone(), settings.get("whatsapp.default_country_code", "91"));
+        return new Preview(message(language(), inv, link), to == null ? "" : to, link, inv.invoiceNo());
+    }
+
+    /** The owner pressed Send in the preview: keep the (possibly edited) text in the WhatsApp history. */
+    public void logShare(UUID invoiceId, String text) {
+        Inv inv = invoice(invoiceId);
+        InvoiceArchiveService.Archived doc = archive.ensure(invoiceId);
+        String to = PhoneNumbers.toWhatsApp(inv.phone(), settings.get("whatsapp.default_country_code", "91"));
+        UUID id = insertMessage(invoiceId, to == null ? "" : to, inv.customerName(), "LINK", language(), null,
+                text == null ? "" : text, true);
+        jdbc.update("update whatsapp_messages set status = 'OPENED', document_id = ?, sent_at = now(), attempts = 1 where id = ?",
+                doc.documentId(), id);
+    }
+
     public String publicLink(String token) {
         String base = settings.get("app.public_base_url", "").trim();
+        if (base.isEmpty()) {
+            base = props.invoiceInitial(); // application.yml: app.invoice-initial
+        }
         while (base.endsWith("/")) {
             base = base.substring(0, base.length() - 1);
         }

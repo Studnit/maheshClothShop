@@ -163,26 +163,46 @@
     <li th:each="m : ${methods}" th:data-code="${m.code()}" th:data-name="${m.name()}" th:data-ref="${m.requiresReference()}"></li>
   </ul>
 
-  <!-- success dialog -->
+  <!-- success dialog: bill preview + the WhatsApp message, the owner presses Send -->
   <div class="modal fade" id="doneModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered"><div class="modal-content">
-      <div class="modal-body text-center p-4">
-        <div class="display-4 text-success"><i class="bi bi-check-circle-fill"></i></div>
-        <h2 class="h4 mt-2" th:text="#{pos.done.title}">Sale completed</h2>
-        <div class="fs-5 fw-semibold" id="doneNo">INV</div>
-        <div class="money fs-3 fw-bold" id="doneTotal">₹0</div>
-        <div class="text-warning fw-semibold d-none" id="doneDue"></div>
-        <div class="alert alert-success py-2 small mt-3 d-none" id="doneWaAuto"><i class="bi bi-whatsapp"></i> <span th:text="#{pos.done.wa.auto}">The bill is being sent to the customer on WhatsApp.</span></div>
-        <div class="alert alert-warning py-2 small mt-3 d-none" id="doneWaFail"></div>
-        <div class="d-grid gap-2 mt-3">
-          <a class="btn btn-success d-none" id="doneWa" target="_blank" rel="noopener"><i class="bi bi-whatsapp me-1"></i><span th:text="#{pos.done.wa.share}">Send on WhatsApp</span></a>
-          <div class="btn-group">
-            <a class="btn btn-outline-primary" id="donePrint" target="_blank" rel="noopener"><i class="bi bi-printer me-1"></i><span th:text="#{pos.done.print}">Print A4</span></a>
-            <a class="btn btn-outline-primary" id="doneThermal" target="_blank" rel="noopener"><i class="bi bi-receipt me-1"></i><span th:text="#{pos.done.thermal}">Receipt</span></a>
-            <a class="btn btn-outline-primary" id="doneView"><i class="bi bi-eye me-1"></i><span th:text="#{pos.done.view}">View</span></a>
-          </div>
-          <button class="btn btn-primary" type="button" id="doneNew"><i class="bi bi-plus-lg me-1"></i><span th:text="#{pos.done.new}">New bill</span></button>
+    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable"><div class="modal-content">
+      <div class="modal-header">
+        <div class="d-flex align-items-center gap-3">
+          <span class="display-6 text-success"><i class="bi bi-check-circle-fill"></i></span>
+          <div><div class="h5 mb-0" th:text="#{pos.done.title}">Sale completed</div>
+            <div><strong id="doneNo">INV</strong> · <span class="money fw-bold" id="doneTotal">₹0</span> <span class="text-warning fw-semibold d-none" id="doneDue"></span></div></div>
         </div>
+      </div>
+      <div class="modal-body">
+        <div class="row g-3">
+          <div class="col-lg-7">
+            <div class="small fw-semibold text-muted mb-1" th:text="#{pos.done.preview}">Bill preview</div>
+            <iframe id="doneFrame" class="done-frame" title="Bill preview"></iframe>
+          </div>
+          <div class="col-lg-5">
+            <div class="alert alert-success py-2 small d-none" id="doneWaAuto"><i class="bi bi-whatsapp"></i> <span th:text="#{pos.done.wa.auto}">The bill is being sent to the customer on WhatsApp.</span></div>
+            <div class="alert alert-warning py-2 small d-none" id="doneWaFail"></div>
+            <div id="doneMsgBox" class="d-none">
+              <label class="small fw-semibold text-muted mb-1" for="doneMsg" th:text="#{pos.done.msg}">Message to the customer (you can edit it)</label>
+              <textarea id="doneMsg" class="form-control" rows="11"></textarea>
+              <div class="d-grid gap-2 mt-2">
+                <a class="btn btn-success btn-lg" id="doneWa" target="_blank" rel="noopener"><i class="bi bi-whatsapp me-1"></i><span th:text="#{pos.done.wa.share}">Send on WhatsApp</span></a>
+                <div class="btn-group">
+                  <a class="btn btn-outline-success" id="doneWaWeb" target="_blank" rel="noopener"><i class="bi bi-globe me-1"></i><span th:text="#{pos.done.wa.web}">WhatsApp Web</span></a>
+                  <button class="btn btn-outline-secondary" type="button" id="doneCopy" th:data-copied="#{pos.done.copied}"><i class="bi bi-clipboard me-1"></i><span th:text="#{pos.done.copy}">Copy message</span></button>
+                </div>
+              </div>
+            </div>
+            <div class="btn-group w-100 mt-3">
+              <a class="btn btn-outline-primary" id="donePrint" target="_blank" rel="noopener"><i class="bi bi-printer me-1"></i><span th:text="#{pos.done.print}">Print A4</span></a>
+              <a class="btn btn-outline-primary" id="doneThermal" target="_blank" rel="noopener"><i class="bi bi-receipt me-1"></i><span th:text="#{pos.done.thermal}">Receipt</span></a>
+              <a class="btn btn-outline-primary" id="doneView"><i class="bi bi-eye me-1"></i><span th:text="#{pos.done.view}">View</span></a>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-primary btn-lg" type="button" id="doneNew"><i class="bi bi-plus-lg me-1"></i><span th:text="#{pos.done.new}">New bill</span></button>
       </div>
     </div></div>
   </div>

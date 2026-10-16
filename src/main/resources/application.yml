@@ -91,6 +91,9 @@ app:
   timezone: ${APP_TIMEZONE:Asia/Kolkata}
   # If set, the first-run /setup page requires this token. Strongly recommended in production.
   setup-token: ${APP_SETUP_TOKEN:}
+  # Web address put in front of the customer's bill link (/i/<token>) in WhatsApp messages.
+  # Used when "Public web address" is empty in Settings. TEMPORARY value: set INVOICE_INITIAL to your real domain.
+  invoice-initial: ${INVOICE_INITIAL:https://maheshclothshop-production.up.railway.app}
   # Secrets come ONLY from the environment, never from the database or the Settings screen.
   whatsapp:
     access-token: ${WHATSAPP_ACCESS_TOKEN:}

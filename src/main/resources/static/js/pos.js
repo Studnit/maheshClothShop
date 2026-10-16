@@ -357,22 +357,46 @@
     $('donePrint').href = '/sales/' + r.invoiceId + '/print?autoprint=1';
     $('doneThermal').href = '/sales/' + r.invoiceId + '/receipt?autoprint=1';
     $('doneView').href = '/sales/' + r.invoiceId;
+    $('doneFrame').src = '/sales/' + r.invoiceId + '/print';
     $('doneWaAuto').classList.toggle('d-none', !(wantWa && r.autoSend));
-    var wa = $('doneWa');
-    // when the Cloud API is not auto-sending, offer the one-tap WhatsApp share (works with the owner's WhatsApp on any phone)
+    // when the Cloud API is not auto-sending, the owner sees the exact message first, can edit it, then presses Send
     var manual = r.canShare && !(wantWa && r.autoSend);
-    wa.classList.toggle('d-none', !manual);
-    wa.href = '/sales/' + r.invoiceId + '/whatsapp';
+    $('doneMsgBox').classList.toggle('d-none', !manual);
+    if (manual) { loadMessagePreview(r.invoiceId); }
     if (!doneModal) { doneModal = new bootstrap.Modal($('doneModal')); }
     doneModal.show();
     resetAllSilently();
   }
+  var waPhoneNo = '', waInvoice = null;
+  function waLinks() {
+    var text = encodeURIComponent($('doneMsg').value);
+    $('doneWa').href = 'https://wa.me/' + waPhoneNo + '?text=' + text;
+    $('doneWaWeb').href = 'https://web.whatsapp.com/send?' + (waPhoneNo ? 'phone=' + waPhoneNo + '&' : '') + 'text=' + text;
+  }
+  function loadMessagePreview(invoiceId) {
+    waInvoice = invoiceId; $('doneMsg').value = '…';
+    MCS.json('/sales/' + invoiceId + '/whatsapp/preview').then(function (p) {
+      waPhoneNo = p.phone || ''; $('doneMsg').value = p.text; waLinks();
+    }).catch(function (e) { $('doneMsg').value = ''; $('doneWaFail').textContent = e.message; $('doneWaFail').classList.remove('d-none'); });
+  }
+  $('doneMsg').addEventListener('input', waLinks);
+  [$('doneWa'), $('doneWaWeb')].forEach(function (a) {
+    a.addEventListener('click', function () {
+      // remember in the WhatsApp history what the owner sent; the link itself opens normally
+      if (waInvoice) { MCS.json('/sales/' + waInvoice + '/whatsapp/logged', { method: 'POST', body: { text: $('doneMsg').value } }).catch(function () { /* history only */ }); }
+    });
+  });
+  $('doneCopy').addEventListener('click', function () {
+    var done = function () { MCS.toast($('doneCopy').dataset.copied, 'success'); };
+    if (navigator.clipboard) { navigator.clipboard.writeText($('doneMsg').value).then(done); } else { $('doneMsg').select(); document.execCommand('copy'); done(); }
+  });
+
   function resetAllSilently() {
     state.cart = []; state.customer = null; state.invDiscount = 0; state.pays = []; state.quote = null; state.attemptId = null;
     $('invDisc').value = 0; $('notes').value = ''; $('walkName').value = ''; $('walkPhone').value = ''; $('cashIn').value = ''; custQ.value = '';
     setCustomer(null); renderCart(); renderTotals();
   }
-  $('doneNew').addEventListener('click', function () { doneModal.hide(); qEl.focus(); runSearch(''); });
+  $('doneNew').addEventListener('click', function () { doneModal.hide(); $('doneFrame').src = 'about:blank'; qEl.focus(); runSearch(''); });
 
   // ---------------------------------------------------------------- keyboard
   document.addEventListener('keydown', function (e) {

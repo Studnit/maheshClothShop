@@ -7,12 +7,16 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
  * app_settings table and is edited from the Settings screen. Secrets are only ever read from the environment.
  */
 @ConfigurationProperties(prefix = "app")
-public record AppProperties(String timezone, String setupToken, Whatsapp whatsapp) {
+public record AppProperties(String timezone, String setupToken, String invoiceInitial, Whatsapp whatsapp) {
 
     public AppProperties {
         if (timezone == null || timezone.isBlank()) {
             timezone = "Asia/Kolkata";
         }
+        if (invoiceInitial == null) {
+            invoiceInitial = "";
+        }
+        invoiceInitial = invoiceInitial.trim().replaceAll("/+$", "");
         if (whatsapp == null) {
             whatsapp = new Whatsapp(null, null, null, null);
         }

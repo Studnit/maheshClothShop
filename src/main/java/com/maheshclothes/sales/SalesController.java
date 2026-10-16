@@ -21,11 +21,14 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.Map;
 import java.util.UUID;
 
 /** Invoice list, detail, printing, balance collection, cancellation and WhatsApp actions. */
@@ -151,6 +154,25 @@ public class SalesController {
     }
 
     // ---------------------------------------------------------------- WhatsApp
+
+    /** The message about to be sent, for the preview shown right after billing. */
+    @GetMapping("/sales/{id}/whatsapp/preview")
+    @PreAuthorize("hasAuthority('WHATSAPP_SEND')")
+    @ResponseBody
+    public WhatsappService.Preview waPreview(@PathVariable UUID id) {
+        accessible(id);
+        return whatsapp.preview(id);
+    }
+
+    /** Called when the owner presses Send in the preview, so the history shows what was sent. */
+    @PostMapping("/sales/{id}/whatsapp/logged")
+    @PreAuthorize("hasAuthority('WHATSAPP_SEND')")
+    @ResponseBody
+    public Map<String, Object> waLogged(@PathVariable UUID id, @RequestBody Map<String, String> body) {
+        accessible(id);
+        whatsapp.logShare(id, body.get("text"));
+        return Map.of("ok", true);
+    }
 
     /** One tap: open WhatsApp with the thank-you message and a download link for the bill. */
     @GetMapping("/sales/{id}/whatsapp")
